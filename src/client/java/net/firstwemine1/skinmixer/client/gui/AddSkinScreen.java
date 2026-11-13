@@ -65,7 +65,7 @@ public final class AddSkinScreen extends Screen {
 			if (found.isPresent()) {
 				SkinLibrary.add(found.get().id(), found.get().name());
 				parent.skinAdded();
-				minecraft.gui.setScreen(parent);
+				minecraft.setScreen(parent);
 			} else {
 				status = Component.translatable("skinmixer.add.not_found", wanted);
 				statusColour = RED;
@@ -93,6 +93,6 @@ public final class AddSkinScreen extends Screen {
 
 	@Override
 	public void onClose() {
-		minecraft.gui.setScreen(parent);
+		minecraft.setScreen(parent);
 	}
 }

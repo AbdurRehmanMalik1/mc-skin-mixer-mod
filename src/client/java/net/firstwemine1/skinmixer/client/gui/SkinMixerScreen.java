@@ -372,7 +372,7 @@ public final class SkinMixerScreen extends Screen {
 
 	@Override
 	public void onClose() {
-		minecraft.gui.setScreen(parent);
+		minecraft.setScreen(parent);
 	}
 
 	// ---- widgets ----
@@ -549,7 +549,7 @@ public final class SkinMixerScreen extends Screen {
 
 		@Override
 		public void onPress(InputWithModifiers input) {
-			minecraft.gui.setScreen(new AddSkinScreen(SkinMixerScreen.this));
+			minecraft.setScreen(new AddSkinScreen(SkinMixerScreen.this));
 		}
 
 		@Override

@@ -1,7 +1,7 @@
 package net.firstwemine1.skinmixer.client.mixin;
 
 import net.minecraft.client.gui.components.PlayerSkinWidget;
-import net.minecraft.client.model.Model;
+import net.minecraft.client.model.player.PlayerModel;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
@@ -9,10 +9,10 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(PlayerSkinWidget.class)
 public interface PlayerSkinWidgetAccessor {
 	@Accessor("wideModel")
-	Model.Simple skinmixer$wideModel();
+	PlayerModel skinmixer$wideModel();
 
 	@Accessor("slimModel")
-	Model.Simple skinmixer$slimModel();
+	PlayerModel skinmixer$slimModel();
 
 	@Accessor("rotationX")
 	float skinmixer$rotationX();

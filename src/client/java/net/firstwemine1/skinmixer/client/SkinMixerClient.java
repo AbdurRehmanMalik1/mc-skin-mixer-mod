@@ -44,15 +44,15 @@ public final class SkinMixerClient implements ClientModInitializer {
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (screen instanceof SkinCustomizationScreen && client.player != null) {
 				Screens.getWidgets(screen).add(Button.builder(Component.translatable("skinmixer.screen.open"),
-						b -> client.gui.setScreen(new SkinMixerScreen(screen))).bounds(6, 6, 100, 20).build());
+						b -> client.setScreen(new SkinMixerScreen(screen))).bounds(6, 6, 100, 20).build());
 			}
 		});
 	}
 
 	private void tick(Minecraft client) {
 		while (OPEN_MENU.consumeClick()) {
-			if (client.player != null && client.gui.screen() == null) {
-				client.gui.setScreen(new SkinMixerScreen(null));
+			if (client.player != null && client.screen == null) {
+				client.setScreen(new SkinMixerScreen(null));
 			}
 		}
 		if (++ticks % GARBAGE_INTERVAL_TICKS == 0) {

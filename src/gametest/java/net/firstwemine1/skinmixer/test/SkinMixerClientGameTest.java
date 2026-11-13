@@ -9,7 +9,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
-import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerConnection;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestDedicatedServerContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestServerContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
@@ -53,7 +52,7 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 
 	private static void singleplayer(ClientGameTestContext context, List<String> failures) {
 		try (TestSingleplayerContext world = context.worldBuilder().create()) {
-			world.getConnection().waitForChunksRender();
+			world.getClientLevel().waitForChunksRender();
 			TestServerContext server = world.getServer();
 			server.runCommand("time set noon");
 			server.runCommand("execute as @p at @s run tp @s ~ ~ ~ 0 0");
@@ -63,7 +62,7 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 			context.getInput().pressKey(SkinMixerClient.OPEN_MENU);
 			context.waitTicks(5);
 			expect(failures, "key opens the menu",
-					context.computeOnClient(minecraft -> minecraft.gui.screen() instanceof SkinMixerScreen));
+					context.computeOnClient(minecraft -> minecraft.screen instanceof SkinMixerScreen));
 			context.takeScreenshot("menu-open");
 
 			// Tabs zoom the camera; hovering a choice tries it on; clicking keeps it. All real input.
@@ -99,7 +98,7 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 			context.takeScreenshot("menu-randomized");
 			click(context, "Apply");
 			context.waitTicks(5);
-			expect(failures, "Apply closes the menu", context.computeOnClient(minecraft -> minecraft.gui.screen() == null));
+			expect(failures, "Apply closes the menu", context.computeOnClient(minecraft -> minecraft.screen == null));
 			Outfit random = context.computeOnClient(minecraft -> ClientOutfits.get(minecraft.player.getUUID()));
 			expect(failures, "Apply reaches the server and comes back", random != null && random.isValid());
 			expect(failures, "Randomize uses default skins only", random != null && !random.usesSelf());
@@ -155,7 +154,7 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 		context.waitTicks(5);
 		click(context, "Add a skin");
 		context.waitTicks(3);
-		expect(failures, "+ card opens the add screen", context.computeOnClient(minecraft -> minecraft.gui.screen() instanceof AddSkinScreen));
+		expect(failures, "+ card opens the add screen", context.computeOnClient(minecraft -> minecraft.screen instanceof AddSkinScreen));
 		context.getInput().typeChars("Notch");
 		context.takeScreenshot("add-typed");
 		context.getInput().pressKey(InputConstants.KEY_RETURN);
@@ -163,12 +162,12 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 		for (int i = 0; i < 120 && !added; i++) {
 			context.waitTicks(5);
 			added = context.computeOnClient(minecraft ->
-					minecraft.gui.screen() instanceof SkinMixerScreen && !SkinLibrary.entries().isEmpty());
+					minecraft.screen instanceof SkinMixerScreen && !SkinLibrary.entries().isEmpty());
 		}
 		if (!added) {
 			context.takeScreenshot("add-not-found");
 			SkinMixer.LOGGER.info("[skinmixer-test] SKIP add by username: Mojang couldn't be reached");
-			context.runOnClient(minecraft -> minecraft.gui.setScreen(null));
+			context.runOnClient(minecraft -> minecraft.setScreen(null));
 			return;
 		}
 		SkinLibrary.Entry notch = context.computeOnClient(minecraft -> SkinLibrary.entries().get(0));
@@ -212,15 +211,15 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 	/** An outfit set on a dedicated server is still there after reconnecting. */
 	private static void dedicatedServer(ClientGameTestContext context, List<String> failures) {
 		try (TestDedicatedServerContext server = context.worldBuilder().createServer()) {
-			try (TestDedicatedServerConnection connection = server.connect()) {
-				connection.waitForChunksRender();
+			try (var connection = server.connect()) {
+				connection.getClientLevel().waitForChunksRender();
 				expect(failures, "dedicated server has the mod", context.computeOnClient(minecraft -> ClientOutfits.serverHasMod()));
 				context.runOnClient(minecraft -> ClientOutfits.choose(new Outfit(false, MIX)));
 				context.waitTicks(10);
 				checkBaked(context, failures, "dedicated server mix", false);
 			}
-			try (TestDedicatedServerConnection connection = server.connect()) {
-				connection.waitForChunksRender();
+			try (var connection = server.connect()) {
+				connection.getClientLevel().waitForChunksRender();
 				context.waitTicks(10);
 				Outfit back = context.computeOnClient(minecraft -> ClientOutfits.get(minecraft.player.getUUID()));
 				expect(failures, "outfit survives reconnecting", back != null && back.parts().equals(MIX));
@@ -282,7 +281,7 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 	private static void hover(ClientGameTestContext context, String label) {
 		double[] at = context.computeOnClient(minecraft -> {
 			double scale = minecraft.getWindow().getGuiScale();
-			for (AbstractWidget widget : Screens.getWidgets(minecraft.gui.screen())) {
+			for (AbstractWidget widget : Screens.getWidgets(minecraft.screen)) {
 				if (widget.getMessage().getString().equals(label)) {
 					return new double[] {(widget.getX() + widget.getWidth() / 2.0) * scale,
 							(widget.getY() + widget.getHeight() / 2.0) * scale};

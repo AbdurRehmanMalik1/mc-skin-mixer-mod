@@ -6,7 +6,7 @@ import net.firstwemine1.skinmixer.client.mixin.PlayerSkinWidgetAccessor;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.PlayerSkinWidget;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.model.Model;
+import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.util.Mth;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.util.Util;
@@ -84,7 +84,7 @@ public final class OutfitPreview extends PlayerSkinWidget {
 
 		PlayerSkinWidgetAccessor self = (PlayerSkinWidgetAccessor) (Object) this;
 		PlayerSkin current = skin.get();
-		Model.Simple model = current.model() == PlayerModelType.SLIM ? self.skinmixer$slimModel() : self.skinmixer$wideModel();
+		PlayerModel model = current.model() == PlayerModelType.SLIM ? self.skinmixer$slimModel() : self.skinmixer$wideModel();
 
 		float boxHeight = getHeight() * zoom;
 		float boxWidth = getWidth() * zoom;
