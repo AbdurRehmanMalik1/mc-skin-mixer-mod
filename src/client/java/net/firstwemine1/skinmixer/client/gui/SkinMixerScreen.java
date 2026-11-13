@@ -14,7 +14,7 @@ import net.firstwemine1.skinmixer.client.SkinBaker;
 import net.firstwemine1.skinmixer.client.gui.Category.Side;
 import net.firstwemine1.skinmixer.outfit.Outfit;
 import net.firstwemine1.skinmixer.skin.Part;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -335,7 +335,7 @@ public final class SkinMixerScreen extends Screen {
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 		// Try on whatever choice is under the cursor.
 		String under = null;
 		for (AbstractButton card : cards) {
@@ -346,11 +346,11 @@ public final class SkinMixerScreen extends Screen {
 		hovered = under;
 		updatePreview();
 
-		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-		graphics.centeredText(font, Component.translatable("skinmixer.screen.title_with", title, category.title()), width / 2, 8, WHITE);
+		super.render(graphics, mouseX, mouseY, partialTick);
+		graphics.drawCenteredString(font, Component.translatable("skinmixer.screen.title_with", title, category.title()), width / 2, 8, WHITE);
 		Component status = Component.translatable(ClientOutfits.serverHasMod()
 				? "skinmixer.screen.status.synced" : "skinmixer.screen.status.local");
-		graphics.centeredText(font, status, width / 2, height - 38, GREY);
+		graphics.drawCenteredString(font, status, width / 2, height - 38, GREY);
 		if (rowCount() > visibleRows) {
 			// Scrollbar beside the grid.
 			int barX = gridX + COLUMNS * (CARD_WIDTH + CARD_GAP) + 1;
@@ -360,13 +360,13 @@ public final class SkinMixerScreen extends Screen {
 			graphics.fill(barX, gridY, barX + 3, gridY + barHeight, CARD);
 			graphics.fill(barX, thumbY, barX + 3, thumbY + thumbHeight, GREY);
 		}
-		graphics.centeredText(font, Component.translatable("skinmixer.screen.preview.hint"),
+		graphics.drawCenteredString(font, Component.translatable("skinmixer.screen.preview.hint"),
 				preview.getX() + preview.getWidth() / 2, preview.getBottom() - 11, GREY);
 	}
 
 	@Override
-	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-		super.extractBackground(graphics, mouseX, mouseY, partialTick);
+	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+		super.renderBackground(graphics, mouseX, mouseY, partialTick);
 		graphics.fill(preview.getX(), preview.getY(), preview.getRight(), preview.getBottom(), PANEL);
 	}
 
@@ -407,7 +407,7 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+		protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 			graphics.fill(getX(), getY(), getRight(), getBottom(), PANEL);
 			PartArt.drawDoll(graphics, shownTexture(), shownSlim(), dollX(), dollY(), scale);
 			Part under = isHovered() ? partAt(mouseX, mouseY) : null;
@@ -417,7 +417,7 @@ public final class SkinMixerScreen extends Screen {
 					int[] rect = PartArt.dollRect(part, shownSlim());
 					int x = Math.round(dollX() + rect[0] * scale);
 					int y = Math.round(dollY() + rect[1] * scale);
-					graphics.outline(x - 1, y - 1, rect[2] * scale + 2, rect[3] * scale + 2, editing ? YELLOW : WHITE);
+					graphics.renderOutline(x - 1, y - 1, rect[2] * scale + 2, rect[3] * scale + 2, editing ? YELLOW : WHITE);
 				}
 			}
 		}
@@ -452,7 +452,7 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+		protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 			boolean selected = tab == category;
 			graphics.fill(getX(), getY(), getRight(), getBottom(), selected ? TAB_SELECTED : isHoveredOrFocused() ? CARD_HOVER : CARD);
 			if (selected) {
@@ -509,7 +509,7 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+		protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 			int x = getX();
 			int y = getY();
 			graphics.fill(x, y, getRight(), getBottom(), isHoveredOrFocused() ? CARD_HOVER : CARD);
@@ -519,12 +519,12 @@ public final class SkinMixerScreen extends Screen {
 			} else {
 				// Still being fetched from Mojang, or couldn't be.
 				String mark = RemoteSkins.isLoading(remote) ? "..." : "?";
-				graphics.centeredText(font, mark, x + getWidth() / 2, y + getHeight() / 2 - 4, GREY);
+				graphics.drawCenteredString(font, mark, x + getWidth() / 2, y + getHeight() / 2 - 4, GREY);
 			}
 			if (isWorn(source)) {
-				graphics.outline(x, y, getWidth(), getHeight(), YELLOW);
+				graphics.renderOutline(x, y, getWidth(), getHeight(), YELLOW);
 			} else if (isHoveredOrFocused()) {
-				graphics.outline(x, y, getWidth(), getHeight(), WHITE);
+				graphics.renderOutline(x, y, getWidth(), getHeight(), WHITE);
 			}
 			if (Outfit.SELF.equals(source)) {
 				// A gold corner marks the player's own skin.
@@ -553,12 +553,12 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+		protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 			int x = getX();
 			int y = getY();
 			int colour = isHoveredOrFocused() ? WHITE : GREY;
 			graphics.fill(x, y, getRight(), getBottom(), isHoveredOrFocused() ? CARD_HOVER : CARD);
-			graphics.outline(x, y, getWidth(), getHeight(), colour);
+			graphics.renderOutline(x, y, getWidth(), getHeight(), colour);
 			int cx = x + getWidth() / 2;
 			int cy = y + getHeight() / 2;
 			graphics.fill(cx - 7, cy - 1, cx + 7, cy + 1, colour);

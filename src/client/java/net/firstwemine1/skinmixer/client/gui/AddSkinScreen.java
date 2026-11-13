@@ -2,7 +2,7 @@ package net.firstwemine1.skinmixer.client.gui;
 
 import net.firstwemine1.skinmixer.client.RemoteSkins;
 import net.firstwemine1.skinmixer.client.SkinLibrary;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -84,11 +84,11 @@ public final class AddSkinScreen extends Screen {
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-		super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-		graphics.centeredText(font, title, width / 2, height / 2 - 70, WHITE);
-		graphics.centeredText(font, Component.translatable("skinmixer.add.help"), width / 2, height / 2 - 52, GREY);
-		graphics.centeredText(font, status, width / 2, height / 2 - 2, statusColour);
+	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+		super.render(graphics, mouseX, mouseY, partialTick);
+		graphics.drawCenteredString(font, title, width / 2, height / 2 - 70, WHITE);
+		graphics.drawCenteredString(font, Component.translatable("skinmixer.add.help"), width / 2, height / 2 - 52, GREY);
+		graphics.drawCenteredString(font, status, width / 2, height / 2 - 2, statusColour);
 	}
 
 	@Override

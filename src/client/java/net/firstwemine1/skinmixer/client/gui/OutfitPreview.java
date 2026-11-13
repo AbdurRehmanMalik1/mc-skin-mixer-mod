@@ -3,7 +3,7 @@ package net.firstwemine1.skinmixer.client.gui;
 import java.util.function.Supplier;
 
 import net.firstwemine1.skinmixer.client.mixin.PlayerSkinWidgetAccessor;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerSkinWidget;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.model.player.PlayerModel;
@@ -66,7 +66,7 @@ public final class OutfitPreview extends PlayerSkinWidget {
 	}
 
 	@Override
-	protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+	protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 		long now = Util.getMillis();
 		if (lastFrame >= 0) {
 			float step = 1 - (float) Math.exp(-(now - lastFrame) / EASE_MILLIS);
@@ -95,7 +95,7 @@ public final class OutfitPreview extends PlayerSkinWidget {
 		int top = Math.round(getY() + (getHeight() - boxHeight) / 2 - shift);
 
 		graphics.enableScissor(getX(), getY(), getRight(), getBottom());
-		graphics.skin(model, current.body().texturePath(), scale, self.skinmixer$rotationX(), self.skinmixer$rotationY(),
+		graphics.submitSkinRenderState(model, current.body().texturePath(), scale, self.skinmixer$rotationX(), self.skinmixer$rotationY(),
 				PIVOT_Y, left, top, left + Math.round(boxWidth), top + Math.round(boxHeight));
 		graphics.disableScissor();
 	}

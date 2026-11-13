@@ -3,7 +3,7 @@ package net.firstwemine1.skinmixer.client.gui;
 import java.util.List;
 
 import net.firstwemine1.skinmixer.skin.Part;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
@@ -37,7 +37,7 @@ public final class PartArt {
 	}
 
 	/** One part's front face at (x, y), each skin pixel drawn {@code scale} GUI pixels wide. */
-	public static void drawFront(GuiGraphicsExtractor graphics, Identifier texture, Part part, boolean slim,
+	public static void drawFront(GuiGraphics graphics, Identifier texture, Part part, boolean slim,
 			float x, float y, float scale) {
 		int width = part.width(slim);
 		int height = part.height();
@@ -52,7 +52,7 @@ public final class PartArt {
 	}
 
 	/** The whole flat front view with its top-left corner at (x, y). */
-	public static void drawDoll(GuiGraphicsExtractor graphics, Identifier texture, boolean slim, float x, float y, float scale) {
+	public static void drawDoll(GuiGraphics graphics, Identifier texture, boolean slim, float x, float y, float scale) {
 		for (Part part : Part.values()) {
 			int[] rect = dollRect(part, slim);
 			drawFront(graphics, texture, part, slim, x + rect[0] * scale, y + rect[1] * scale, scale);
@@ -63,7 +63,7 @@ public final class PartArt {
 	 * Just the given parts, as large as fits in the box and centred in it. A pair of arms is drawn side
 	 * by side rather than a body-width apart, so it isn't drawn tiny.
 	 */
-	public static void drawItem(GuiGraphicsExtractor graphics, Identifier texture, boolean slim, List<Part> parts,
+	public static void drawItem(GuiGraphics graphics, Identifier texture, boolean slim, List<Part> parts,
 			int boxX, int boxY, int boxWidth, int boxHeight) {
 		int[][] rects = new int[parts.size()][];
 		boolean armPair = parts.size() == 2 && parts.get(0).isArm() && parts.get(1).isArm();

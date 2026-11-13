@@ -52,7 +52,7 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 
 	private static void singleplayer(ClientGameTestContext context, List<String> failures) {
 		try (TestSingleplayerContext world = context.worldBuilder().create()) {
-			world.getClientLevel().waitForChunksRender();
+			world.getClientWorld().waitForChunksRender();
 			TestServerContext server = world.getServer();
 			server.runCommand("time set noon");
 			server.runCommand("execute as @p at @s run tp @s ~ ~ ~ 0 0");
@@ -212,14 +212,14 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 	private static void dedicatedServer(ClientGameTestContext context, List<String> failures) {
 		try (TestDedicatedServerContext server = context.worldBuilder().createServer()) {
 			try (var connection = server.connect()) {
-				connection.getClientLevel().waitForChunksRender();
+				connection.getClientWorld().waitForChunksRender();
 				expect(failures, "dedicated server has the mod", context.computeOnClient(minecraft -> ClientOutfits.serverHasMod()));
 				context.runOnClient(minecraft -> ClientOutfits.choose(new Outfit(false, MIX)));
 				context.waitTicks(10);
 				checkBaked(context, failures, "dedicated server mix", false);
 			}
 			try (var connection = server.connect()) {
-				connection.getClientLevel().waitForChunksRender();
+				connection.getClientWorld().waitForChunksRender();
 				context.waitTicks(10);
 				Outfit back = context.computeOnClient(minecraft -> ClientOutfits.get(minecraft.player.getUUID()));
 				expect(failures, "outfit survives reconnecting", back != null && back.parts().equals(MIX));
@@ -281,7 +281,7 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 	private static void hover(ClientGameTestContext context, String label) {
 		double[] at = context.computeOnClient(minecraft -> {
 			double scale = minecraft.getWindow().getGuiScale();
-			for (AbstractWidget widget : Screens.getWidgets(minecraft.screen)) {
+			for (AbstractWidget widget : Screens.getButtons(minecraft.screen)) {
 				if (widget.getMessage().getString().equals(label)) {
 					return new double[] {(widget.getX() + widget.getWidth() / 2.0) * scale,
 							(widget.getY() + widget.getHeight() / 2.0) * scale};

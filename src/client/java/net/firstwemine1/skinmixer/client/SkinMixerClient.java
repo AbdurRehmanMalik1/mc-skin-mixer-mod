@@ -5,7 +5,7 @@ import net.firstwemine1.skinmixer.SkinMixer;
 import net.firstwemine1.skinmixer.outfit.OutfitPayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -28,7 +28,7 @@ public final class SkinMixerClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		KeyMapping.Category.register(KEY_CATEGORY.id());
-		KeyMappingHelper.registerKeyMapping(OPEN_MENU);
+		KeyBindingHelper.registerKeyBinding(OPEN_MENU);
 
 		ClientPlayNetworking.registerGlobalReceiver(OutfitPayload.TYPE,
 				(payload, context) -> ClientOutfits.receive(payload.player(), payload.outfit()));
@@ -43,7 +43,7 @@ public final class SkinMixerClient implements ClientModInitializer {
 
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (screen instanceof SkinCustomizationScreen && client.player != null) {
-				Screens.getWidgets(screen).add(Button.builder(Component.translatable("skinmixer.screen.open"),
+				Screens.getButtons(screen).add(Button.builder(Component.translatable("skinmixer.screen.open"),
 						b -> client.setScreen(new SkinMixerScreen(screen))).bounds(6, 6, 100, 20).build());
 			}
 		});

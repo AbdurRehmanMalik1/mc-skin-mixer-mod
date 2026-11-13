@@ -39,8 +39,8 @@ public final class OutfitServer {
 	}
 
 	public static void register() {
-		PayloadTypeRegistry.serverboundPlay().register(SetOutfitPayload.TYPE, SetOutfitPayload.CODEC);
-		PayloadTypeRegistry.clientboundPlay().register(OutfitPayload.TYPE, OutfitPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(SetOutfitPayload.TYPE, SetOutfitPayload.CODEC);
+		PayloadTypeRegistry.playS2C().register(OutfitPayload.TYPE, OutfitPayload.CODEC);
 		ServerPlayNetworking.registerGlobalReceiver(SetOutfitPayload.TYPE,
 				(payload, context) -> requestChange(context.player(), payload.outfit()));
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> store = OutfitStore.load(server.getWorldPath(LevelResource.ROOT)));
