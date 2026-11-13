@@ -1,5 +1,7 @@
 package net.firstwemine1.skinmixer.client;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -18,6 +20,8 @@ import net.firstwemine1.skinmixer.skin.SkinCompositor.SourceSkin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.HttpTexture;
+import net.firstwemine1.skinmixer.client.mixin.HttpTextureAccessor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.client.resources.PlayerSkin;
@@ -148,10 +152,10 @@ public final class SkinBaker {
 	}
 
 	/**
-	 * A skin texture's pixels. Downloaded skins live only in the texture manager (vanilla keeps their pixels
-	 * after upload); default skins and resource-pack skins are read from the resources.
+	 * A skin texture's pixels. Default skins and resource-pack skins are read from the resources; a
+	 * downloaded skin is read back from the file vanilla cached it in, since its texture keeps no pixels.
 	 */
-	private static int[] texturePixels(ResourceLocation path) {
+	public static int[] texturePixels(ResourceLocation path) {
 		Minecraft minecraft = Minecraft.getInstance();
 		int[] cached = RESOURCE_PIXELS.get(path);
 		if (cached != null) {
@@ -174,10 +178,37 @@ public final class SkinBaker {
 		if (texture instanceof DynamicTexture dynamic && dynamic.getPixels() != null) {
 			return toPixels(dynamic.getPixels());
 		}
+		if (texture instanceof HttpTexture download) {
+			return downloadedPixels(((HttpTextureAccessor) download).skinmixer$file());
+		}
 		return null;
 	}
 
-	/** Pixels as ARGB, or null for anything but a 64×64 skin (vanilla already widened legacy 64×32 ones). */
+	/** A cached skin download, cleaned up as vanilla does on load. Null until the download finished. */
+	private static int[] downloadedPixels(File file) {
+		if (file == null || !file.isFile()) {
+			return null;
+		}
+		try (InputStream in = new FileInputStream(file); NativeImage image = NativeImage.read(in)) {
+			int width = image.getWidth();
+			int height = image.getHeight();
+			if (width != SkinCompositor.SIZE || (height != SkinCompositor.SIZE && height != SkinCompositor.SIZE / 2)) {
+				return null;
+			}
+			int[] raw = new int[width * height];
+			for (int y = 0; y < height; y++) {
+				for (int x = 0; x < width; x++) {
+					raw[y * width + x] = image.getPixelRGBA(x, y);
+				}
+			}
+			return SkinCompositor.normalizeDownloaded(raw, width, height);
+		} catch (IOException e) {
+			SkinMixer.LOGGER.warn("Couldn't read downloaded skin {}", file, e);
+			return null;
+		}
+	}
+
+	/** Pixels as ABGR (whatever NativeImage stores), or null for anything but a 64×64 skin (vanilla already widened legacy 64×32 ones). */
 	private static int[] toPixels(NativeImage image) {
 		if (image.getWidth() != SkinCompositor.SIZE || image.getHeight() != SkinCompositor.SIZE) {
 			return null;
@@ -185,7 +216,7 @@ public final class SkinBaker {
 		int[] pixels = new int[SkinCompositor.SIZE * SkinCompositor.SIZE];
 		for (int y = 0; y < SkinCompositor.SIZE; y++) {
 			for (int x = 0; x < SkinCompositor.SIZE; x++) {
-				pixels[y * SkinCompositor.SIZE + x] = image.getPixel(x, y);
+				pixels[y * SkinCompositor.SIZE + x] = image.getPixelRGBA(x, y);
 			}
 		}
 		return pixels;
@@ -195,7 +226,7 @@ public final class SkinBaker {
 		NativeImage image = new NativeImage(SkinCompositor.SIZE, SkinCompositor.SIZE, true);
 		for (int y = 0; y < SkinCompositor.SIZE; y++) {
 			for (int x = 0; x < SkinCompositor.SIZE; x++) {
-				image.setPixel(x, y, pixels[y * SkinCompositor.SIZE + x]);
+				image.setPixelRGBA(x, y, pixels[y * SkinCompositor.SIZE + x]);
 			}
 		}
 		// register() closes whatever texture had this id before.

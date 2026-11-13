@@ -3,6 +3,7 @@
 	"package": "net.firstwemine1.skinmixer.client.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"HttpTextureAccessor",
 		"PlayerInfoAccessor",
 		"PlayerInfoMixin",
 		"PlayerSkinWidgetAccessor"

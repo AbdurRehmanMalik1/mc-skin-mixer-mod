@@ -3,8 +3,8 @@ package net.firstwemine1.skinmixer.client.gui;
 import java.util.List;
 
 import net.firstwemine1.skinmixer.skin.Part;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -44,10 +44,12 @@ public final class PartArt {
 		graphics.pose().pushPose();
 		graphics.pose().translate(x, y, 0);
 		graphics.pose().scale(scale, scale, 1);
-		graphics.blit(RenderType::guiTextured, texture, 0, 0, part.frontU(false), part.frontV(false),
-				width, height, width, height, TEXTURE_SIZE, TEXTURE_SIZE);
-		graphics.blit(RenderType::guiTextured, texture, 0, 0, part.frontU(true), part.frontV(true),
-				width, height, width, height, TEXTURE_SIZE, TEXTURE_SIZE);
+		RenderSystem.enableBlend();
+		graphics.blit(texture, 0, 0, width, height, part.frontU(false), part.frontV(false),
+				width, height, TEXTURE_SIZE, TEXTURE_SIZE);
+		graphics.blit(texture, 0, 0, width, height, part.frontU(true), part.frontV(true),
+				width, height, TEXTURE_SIZE, TEXTURE_SIZE);
+		RenderSystem.disableBlend();
 		graphics.pose().popPose();
 	}
 

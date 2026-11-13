@@ -98,6 +98,31 @@ class SkinCompositorTest {
 	}
 
 	@Test
+	void legacySkinGetsMirroredLeftLimbs() {
+		int[] legacy = new int[SIZE * SIZE / 2];
+		for (int i = 0; i < legacy.length; i++) {
+			legacy[i] = 0x80000000 | i;
+		}
+		int[] out = SkinCompositor.normalizeDownloaded(legacy, SIZE, SIZE / 2);
+		// Left leg front (x 20..23, y 52..63) is the right leg front (x 4..7, y 20..31), mirrored.
+		for (int col = 0; col < 4; col++) {
+			assertEquals((legacy[25 * SIZE + 4 + col] | 0xFF000000), out[57 * SIZE + 23 - col]);
+		}
+		// Base layers come out opaque; the new overlay rows stay empty.
+		assertEquals(0xFF, out[10 * SIZE + 10] >>> 24);
+		assertEquals(0, out[40 * SIZE + 4]);
+	}
+
+	@Test
+	void modernSkinOnlyGetsAnOpaqueBase() {
+		int[] skin = tagged(1);
+		int[] out = SkinCompositor.normalizeDownloaded(skin, SIZE, SIZE);
+		assertEquals(skin[10 * SIZE + 40] | 0xFF000000, out[10 * SIZE + 40] | 0xFF000000);
+		assertEquals(skin[36 * SIZE + 20], out[36 * SIZE + 20]); // jacket untouched
+		assertEquals(null, SkinCompositor.normalizeDownloaded(new int[16], 4, 4));
+	}
+
+	@Test
 	void slimArmWidensToWide() {
 		int[] slim = tagged(1);
 		int[] out = SkinCompositor.compose(false, p -> new SourceSkin(slim, true));

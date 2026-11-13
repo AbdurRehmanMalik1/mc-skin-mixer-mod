@@ -29,22 +29,44 @@ loom {
 	}
 }
 
-fabricApi {
-	// In-game check: ./gradlew runClientGameTest opens a world and a dedicated server, drives the menu,
-	// checks the baked skin pixel by pixel, and screenshots into build/run/clientGameTest/screenshots.
-	// Source in src/gametest. Opens a game window, so it isn't part of ./gradlew build.
-	configureTests {
-		createSourceSet = true
-		modId = "skinmixer-test"
-		enableGameTests = false
-		eula = true
+// Scripted client check: ./gradlew runClientE2E. It opens a game window for about a minute, drives the
+// menu, checks the baked skin pixel by pixel and screenshots into build/run/clientE2E/screenshots; it
+// exits with status 1 if a check fails, so it isn't part of ./gradlew build. Fabric's client game tests
+// start at 1.21.4, so this version uses its own. Source in src/e2e, never in the mod jar.
+sourceSets {
+	e2e {
+		compileClasspath += main.compileClasspath + main.output + client.compileClasspath + client.output
+		runtimeClasspath += main.runtimeClasspath + main.output + client.runtimeClasspath + client.output
 	}
 }
 
-// The client test needs the client classes.
+loom {
+	mods {
+		"skinmixer-e2e" {
+			sourceSet sourceSets.e2e
+		}
+	}
+	runs {
+		clientE2E {
+			client()
+			name "Client E2E"
+			source sourceSets.e2e
+			runDir "build/run/clientE2E"
+			programArgs "--username", "Player1"
+			vmArg "-Dskinmixer.clientE2E=true"
+		}
+	}
+}
+
 afterEvaluate {
-	sourceSets.gametest.compileClasspath += sourceSets.client.compileClasspath + sourceSets.client.output
-	sourceSets.gametest.runtimeClasspath += sourceSets.client.runtimeClasspath + sourceSets.client.output
+	tasks.named("runClientE2E") {
+		def options = file("build/run/clientE2E/options.txt")
+		doFirst {
+			// Quiet, no first-launch screens, and a window in the background doesn't pause the game.
+			options.parentFile.mkdirs()
+			options.text = "onboardAccessibility:false\npauseOnLostFocus:false\nsoundCategory_master:0.0\ntutorialStep:none\nskipMultiplayerWarning:true\n"
+		}
+	}
 }
 
 dependencies {

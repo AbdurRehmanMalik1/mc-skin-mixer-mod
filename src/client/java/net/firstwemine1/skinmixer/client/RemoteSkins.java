@@ -97,7 +97,7 @@ public final class RemoteSkins {
 		if (profile.isEmpty()) {
 			return CompletableFuture.completedFuture(Optional.empty());
 		}
-		return Minecraft.getInstance().getSkinManager().getOrLoad(profile.get());
+		return Minecraft.getInstance().getSkinManager().getOrLoad(profile.get()).thenApply(Optional::of);
 	}
 
 	/** The full profile, with the skin in it, from Mojang's session server. Blocking. */

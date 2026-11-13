@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"id": "skinmixer-e2e",
+	"version": "1.0.0",
+	"name": "Skin Mixer Client E2E",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"net.firstwemine1.skinmixer.e2e.SkinMixerClientE2E"
+		]
+	},
+	"depends": {
+		"skinmixer": "*"
+	}
+}
