@@ -18,11 +18,9 @@ import net.firstwemine1.skinmixer.skin.SkinCompositor.SourceSkin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.core.ClientAsset;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.world.entity.player.PlayerModelType;
-import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.client.resources.PlayerSkin;
 
 /**
  * Turns outfits into ordinary 64×64 skin textures. The game then draws the baked texture exactly as it
@@ -31,44 +29,43 @@ import net.minecraft.world.entity.player.PlayerSkin;
  * <p>Render thread only: it creates GPU textures.
  */
 public final class SkinBaker {
-	private static final Identifier PREVIEW = SkinMixer.id("preview");
+	private static final ResourceLocation PREVIEW = SkinMixer.id("preview");
 
 	/** Baked textures by {@link #key}: identical outfits share one texture. */
-	private static final Map<String, Identifier> BAKED = new HashMap<>();
+	private static final Map<String, ResourceLocation> BAKED = new HashMap<>();
 	/** Pixels of the default skins, read once from the game's resources. */
-	private static final Map<Identifier, int[]> RESOURCE_PIXELS = new HashMap<>();
+	private static final Map<ResourceLocation, int[]> RESOURCE_PIXELS = new HashMap<>();
 	private static int nextId;
 
 	private SkinBaker() {
 	}
 
 	/** The default skin {@code name}'s texture, in the wide or slim version. */
-	public static Identifier defaultTexture(String name, boolean slim) {
-		return Identifier.withDefaultNamespace("textures/entity/player/" + (slim ? "slim/" : "wide/") + name + ".png");
+	public static ResourceLocation defaultTexture(String name, boolean slim) {
+		return ResourceLocation.withDefaultNamespace("textures/entity/player/" + (slim ? "slim/" : "wide/") + name + ".png");
 	}
 
 	/** A {@link PlayerSkin} drawing {@code texture}, keeping the cape and elytra of {@code base}. */
-	public static PlayerSkin skinOf(Identifier texture, boolean slim, PlayerSkin base) {
-		ClientAsset.Texture body = new ClientAsset.ResourceTexture(texture, texture);
-		PlayerModelType model = slim ? PlayerModelType.SLIM : PlayerModelType.WIDE;
+	public static PlayerSkin skinOf(ResourceLocation texture, boolean slim, PlayerSkin base) {
+		PlayerSkin.Model model = slim ? PlayerSkin.Model.SLIM : PlayerSkin.Model.WIDE;
 		return base == null
-				? PlayerSkin.insecure(body, null, null, model)
-				: new PlayerSkin(body, base.cape(), base.elytra(), model, base.secure());
+				? new PlayerSkin(texture, null, null, null, model, false)
+				: new PlayerSkin(texture, null, base.capeTexture(), base.elytraTexture(), model, base.secure());
 	}
 
 	/** Same outfit on the same real skin, same key, so they share one baked texture. */
 	static String key(Outfit outfit, PlayerSkin self) {
 		String key = (outfit.slim() ? "slim:" : "wide:") + String.join(",", outfit.parts());
-		return outfit.usesSelf() && self != null ? key + "|" + self.body().texturePath() : key;
+		return outfit.usesSelf() && self != null ? key + "|" + self.texture() : key;
 	}
 
 	/**
 	 * The texture for {@code outfit} worn by a player whose real skin is {@code self}, baking it if needed.
 	 * Null if a source skin couldn't be read; the caller then shows the real skin.
 	 */
-	public static Identifier bake(Outfit outfit, PlayerSkin self) {
+	public static ResourceLocation bake(Outfit outfit, PlayerSkin self) {
 		String key = key(outfit, self);
-		Identifier existing = BAKED.get(key);
+		ResourceLocation existing = BAKED.get(key);
 		if (existing != null) {
 			return existing;
 		}
@@ -76,14 +73,14 @@ public final class SkinBaker {
 		if (pixels == null) {
 			return null;
 		}
-		Identifier id = SkinMixer.id("baked/" + nextId++);
+		ResourceLocation id = SkinMixer.id("baked/" + nextId++);
 		upload(id, pixels);
 		BAKED.put(key, id);
 		return id;
 	}
 
 	/** Bakes into the one texture the menu's preview reuses, so trying outfits doesn't pile up textures. */
-	public static Identifier bakePreview(Outfit outfit, PlayerSkin self) {
+	public static ResourceLocation bakePreview(Outfit outfit, PlayerSkin self) {
 		int[] pixels = compose(outfit, self);
 		if (pixels == null) {
 			return null;
@@ -94,8 +91,8 @@ public final class SkinBaker {
 
 	/** Frees baked textures no player wears any more. */
 	static void retainOnly(Set<String> keysInUse) {
-		for (Iterator<Map.Entry<String, Identifier>> it = BAKED.entrySet().iterator(); it.hasNext(); ) {
-			Map.Entry<String, Identifier> entry = it.next();
+		for (Iterator<Map.Entry<String, ResourceLocation>> it = BAKED.entrySet().iterator(); it.hasNext(); ) {
+			Map.Entry<String, ResourceLocation> entry = it.next();
 			if (!keysInUse.contains(entry.getKey())) {
 				Minecraft.getInstance().getTextureManager().release(entry.getValue());
 				it.remove();
@@ -133,8 +130,8 @@ public final class SkinBaker {
 			if (self == null) {
 				return null;
 			}
-			int[] pixels = texturePixels(self.body().texturePath());
-			return pixels == null ? null : new SourceSkin(pixels, self.model() == PlayerModelType.SLIM);
+			int[] pixels = texturePixels(self.texture());
+			return pixels == null ? null : new SourceSkin(pixels, self.model() == PlayerSkin.Model.SLIM);
 		}
 		UUID remote = Outfit.mojangPlayer(id);
 		if (remote != null) {
@@ -142,8 +139,8 @@ public final class SkinBaker {
 			if (skin == null) {
 				return null;
 			}
-			int[] pixels = texturePixels(skin.body().texturePath());
-			return pixels == null ? null : new SourceSkin(pixels, skin.model() == PlayerModelType.SLIM);
+			int[] pixels = texturePixels(skin.texture());
+			return pixels == null ? null : new SourceSkin(pixels, skin.model() == PlayerSkin.Model.SLIM);
 		}
 		// Default skins come in both models, so the arms never need resizing.
 		int[] pixels = texturePixels(defaultTexture(id, slim));
@@ -154,7 +151,7 @@ public final class SkinBaker {
 	 * A skin texture's pixels. Downloaded skins live only in the texture manager (vanilla keeps their pixels
 	 * after upload); default skins and resource-pack skins are read from the resources.
 	 */
-	private static int[] texturePixels(Identifier path) {
+	private static int[] texturePixels(ResourceLocation path) {
 		Minecraft minecraft = Minecraft.getInstance();
 		int[] cached = RESOURCE_PIXELS.get(path);
 		if (cached != null) {
@@ -194,7 +191,7 @@ public final class SkinBaker {
 		return pixels;
 	}
 
-	private static void upload(Identifier id, int[] pixels) {
+	private static void upload(ResourceLocation id, int[] pixels) {
 		NativeImage image = new NativeImage(SkinCompositor.SIZE, SkinCompositor.SIZE, true);
 		for (int y = 0; y < SkinCompositor.SIZE; y++) {
 			for (int x = 0; x < SkinCompositor.SIZE; x++) {
@@ -202,6 +199,6 @@ public final class SkinBaker {
 			}
 		}
 		// register() closes whatever texture had this id before.
-		Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(id::toString, image));
+		Minecraft.getInstance().getTextureManager().register(id, new DynamicTexture(image));
 	}
 }

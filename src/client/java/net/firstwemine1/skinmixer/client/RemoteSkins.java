@@ -6,11 +6,17 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.GameProfileRepository;
+import com.mojang.authlib.ProfileLookupCallback;
+import com.mojang.authlib.yggdrasil.ProfileResult;
+import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import net.firstwemine1.skinmixer.SkinMixer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.Util;
-import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.Util;
+import net.minecraft.client.resources.PlayerSkin;
 
 /**
  * Any Minecraft player's current skin, fetched from Mojang by account id, the way vanilla fetches the
@@ -41,8 +47,7 @@ public final class RemoteSkins {
 			entry = new Entry();
 			ENTRIES.put(player, entry);
 			Entry loading = entry;
-			CompletableFuture.supplyAsync(() -> Minecraft.getInstance().services().profileResolver().fetchById(player),
-							Util.nonCriticalIoPool().forName("skinmixer-profile"))
+			CompletableFuture.supplyAsync(() -> fetchById(player), Util.backgroundExecutor())
 					.thenCompose(RemoteSkins::skinOf)
 					.whenCompleteAsync((skin, error) -> finish(loading, skin == null ? null : skin.orElse(null), error, player),
 							Minecraft.getInstance());
@@ -69,11 +74,8 @@ public final class RemoteSkins {
 	 */
 	public static CompletableFuture<Optional<Found>> lookUp(String name) {
 		Minecraft minecraft = Minecraft.getInstance();
-		return CompletableFuture.supplyAsync(() -> minecraft.services().profileResolver().fetchByName(name)
-								// By name gives the id; by id gives the full profile with the skin in it.
-								.flatMap(found -> minecraft.services().profileResolver().fetchById(found.id())),
-						Util.nonCriticalIoPool().forName("skinmixer-profile"))
-				.thenCompose(profile -> skinOf(profile).thenApply(skin -> skin.map(s -> new Found(profile.get().id(), profile.get().name(), s))))
+		return CompletableFuture.supplyAsync(() -> fetchIdByName(name).flatMap(RemoteSkins::fetchById), Util.backgroundExecutor())
+				.thenCompose(profile -> skinOf(profile).thenApply(skin -> skin.map(s -> new Found(profile.get().getId(), profile.get().getName(), s))))
 				.exceptionally(error -> {
 					SkinMixer.LOGGER.warn("Couldn't look up player {}", name, error);
 					return Optional.empty();
@@ -95,7 +97,30 @@ public final class RemoteSkins {
 		if (profile.isEmpty()) {
 			return CompletableFuture.completedFuture(Optional.empty());
 		}
-		return Minecraft.getInstance().getSkinManager().get(profile.get());
+		return Minecraft.getInstance().getSkinManager().getOrLoad(profile.get());
+	}
+
+	/** The full profile, with the skin in it, from Mojang's session server. Blocking. */
+	private static Optional<GameProfile> fetchById(UUID player) {
+		ProfileResult result = Minecraft.getInstance().getMinecraftSessionService().fetchProfile(player, false);
+		return Optional.ofNullable(result).map(ProfileResult::profile);
+	}
+
+	/** A player's account id from their name, from Mojang's profile API. Blocking. */
+	private static Optional<UUID> fetchIdByName(String name) {
+		GameProfileRepository repository = new YggdrasilAuthenticationService(Minecraft.getInstance().getProxy()).createProfileRepository();
+		AtomicReference<UUID> found = new AtomicReference<>();
+		repository.findProfilesByNames(new String[] {name}, new ProfileLookupCallback() {
+			@Override
+			public void onProfileLookupSucceeded(GameProfile profile) {
+				found.set(profile.getId());
+			}
+
+			@Override
+			public void onProfileLookupFailed(String profileName, Exception exception) {
+			}
+		});
+		return Optional.ofNullable(found.get());
 	}
 
 	private static void finish(Entry entry, PlayerSkin skin, Throwable error, UUID player) {

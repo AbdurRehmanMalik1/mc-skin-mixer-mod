@@ -6,9 +6,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringUtil;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * Adds a skin to the mixer by Minecraft username. The skin is fetched from Mojang, as vanilla does
@@ -75,12 +75,12 @@ public final class AddSkinScreen extends Screen {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		if (event.isConfirmation() && add.active) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		if ((keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) && add.active) {
 			lookUp();
 			return true;
 		}
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override

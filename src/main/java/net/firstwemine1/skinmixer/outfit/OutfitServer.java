@@ -148,7 +148,7 @@ public final class OutfitServer {
 							return 1;
 						})
 						.then(Commands.argument("players", EntityArgument.players())
-								.requires(source -> Commands.LEVEL_GAMEMASTERS.check(source.permissions()))
+								.requires(source -> source.hasPermission(2))
 								.executes(context -> {
 									Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
 									for (ServerPlayer player : players) {

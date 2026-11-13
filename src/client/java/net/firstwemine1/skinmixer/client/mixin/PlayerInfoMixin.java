@@ -3,7 +3,7 @@ package net.firstwemine1.skinmixer.client.mixin;
 import com.mojang.authlib.GameProfile;
 import net.firstwemine1.skinmixer.client.ClientOutfits;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.client.resources.PlayerSkin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,7 +23,7 @@ abstract class PlayerInfoMixin {
 	@Inject(method = "getSkin", at = @At("RETURN"), cancellable = true)
 	private void skinmixer$wearOutfit(CallbackInfoReturnable<PlayerSkin> cir) {
 		PlayerSkin original = cir.getReturnValue();
-		PlayerSkin dressed = ClientOutfits.apply(getProfile().id(), original);
+		PlayerSkin dressed = ClientOutfits.apply(getProfile().getId(), original);
 		if (dressed != original) {
 			cir.setReturnValue(dressed);
 		}

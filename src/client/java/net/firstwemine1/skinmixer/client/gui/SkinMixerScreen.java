@@ -21,14 +21,10 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.InputWithModifiers;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.PlayerModelType;
-import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.client.resources.PlayerSkin;
 
 /**
  * The mixer, laid out like a character creator:
@@ -100,7 +96,7 @@ public final class SkinMixerScreen extends Screen {
 		// Kept across resizes: init runs again then, and the half-made outfit must survive.
 		if (outfit == null) {
 			selfSkin = ClientOutfits.originalSkin(minecraft.player.getUUID());
-			selfSlim = selfSkin.model() == PlayerModelType.SLIM;
+			selfSlim = selfSkin.model() == PlayerSkin.Model.SLIM;
 			Outfit current = ClientOutfits.get(minecraft.player.getUUID());
 			outfit = current != null ? current : Outfit.ofSelf(selfSlim);
 		}
@@ -286,7 +282,7 @@ public final class SkinMixerScreen extends Screen {
 		if (shown.equals(previewed)) {
 			return;
 		}
-		Identifier texture = SkinBaker.bakePreview(shown, selfSkin);
+		ResourceLocation texture = SkinBaker.bakePreview(shown, selfSkin);
 		if (texture == null) {
 			// A skin is still being fetched: keep showing what was there, and try again next frame.
 			if (previewSkin == null) {
@@ -300,23 +296,23 @@ public final class SkinMixerScreen extends Screen {
 
 	// ---- what the widgets draw ----
 
-	private Identifier shownTexture() {
-		return previewSkin.body().texturePath();
+	private ResourceLocation shownTexture() {
+		return previewSkin.texture();
 	}
 
 	private boolean shownSlim() {
-		return previewSkin.model() == PlayerModelType.SLIM;
+		return previewSkin.model() == PlayerSkin.Model.SLIM;
 	}
 
 	/** The texture a choice is drawn from, or null while a fetched skin is still loading. */
-	private Identifier sourceTexture(String source) {
+	private ResourceLocation sourceTexture(String source) {
 		if (Outfit.SELF.equals(source)) {
-			return selfSkin.body().texturePath();
+			return selfSkin.texture();
 		}
 		UUID remote = Outfit.mojangPlayer(source);
 		if (remote != null) {
 			PlayerSkin skin = RemoteSkins.get(remote);
-			return skin == null ? null : skin.body().texturePath();
+			return skin == null ? null : skin.texture();
 		}
 		return SkinBaker.defaultTexture(source, outfit.slim());
 	}
@@ -329,7 +325,7 @@ public final class SkinMixerScreen extends Screen {
 		UUID remote = Outfit.mojangPlayer(source);
 		if (remote != null) {
 			PlayerSkin skin = RemoteSkins.get(remote);
-			return skin != null && skin.model() == PlayerModelType.SLIM;
+			return skin != null && skin.model() == PlayerSkin.Model.SLIM;
 		}
 		return outfit.slim();
 	}
@@ -423,8 +419,8 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		public void onClick(MouseButtonEvent event, boolean doubleClick) {
-			Part part = partAt(event.x(), event.y());
+		public void onClick(double mouseX, double mouseY) {
+			Part part = partAt(mouseX, mouseY);
 			if (part != null) {
 				selectPart(part);
 			}
@@ -447,12 +443,12 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		public void onPress(InputWithModifiers input) {
+		public void onPress() {
 			selectCategory(tab);
 		}
 
 		@Override
-		protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+		protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 			boolean selected = tab == category;
 			graphics.fill(getX(), getY(), getRight(), getBottom(), selected ? TAB_SELECTED : isHoveredOrFocused() ? CARD_HOVER : CARD);
 			if (selected) {
@@ -486,34 +482,29 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		protected boolean isValidClickButton(MouseButtonInfo info) {
-			return info.button() == InputConstants.MOUSE_BUTTON_LEFT
-					|| (remote != null && info.button() == InputConstants.MOUSE_BUTTON_RIGHT);
-		}
-
-		@Override
-		public void onClick(MouseButtonEvent event, boolean doubleClick) {
-			if (event.button() == InputConstants.MOUSE_BUTTON_RIGHT && remote != null) {
+		public boolean mouseClicked(double mouseX, double mouseY, int button) {
+			if (button == InputConstants.MOUSE_BUTTON_RIGHT && remote != null && active && visible && isMouseOver(mouseX, mouseY)) {
+				playDownSound(minecraft.getSoundManager());
 				SkinLibrary.remove(remote);
 				rebuildWidgets();
-			} else {
-				super.onClick(event, doubleClick);
+				return true;
 			}
+			return super.mouseClicked(mouseX, mouseY, button);
 		}
 
 		@Override
-		public void onPress(InputWithModifiers input) {
+		public void onPress() {
 			if (sourceTexture(source) != null) {
 				choose(source);
 			}
 		}
 
 		@Override
-		protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+		protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 			int x = getX();
 			int y = getY();
 			graphics.fill(x, y, getRight(), getBottom(), isHoveredOrFocused() ? CARD_HOVER : CARD);
-			Identifier texture = sourceTexture(source);
+			ResourceLocation texture = sourceTexture(source);
 			if (texture != null) {
 				PartArt.drawItem(graphics, texture, sourceSlim(source), targets(), x + 3, y + 3, getWidth() - 6, getHeight() - 6);
 			} else {
@@ -548,12 +539,12 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		public void onPress(InputWithModifiers input) {
+		public void onPress() {
 			minecraft.setScreen(new AddSkinScreen(SkinMixerScreen.this));
 		}
 
 		@Override
-		protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+		protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 			int x = getX();
 			int y = getY();
 			int colour = isHoveredOrFocused() ? WHITE : GREY;

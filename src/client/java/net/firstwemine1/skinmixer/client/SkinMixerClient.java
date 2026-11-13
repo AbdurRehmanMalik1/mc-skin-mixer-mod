@@ -19,15 +19,13 @@ import net.minecraft.network.chat.Component;
 
 /** Client entrypoint: the menu key, the menu button in Skin Customization, and outfit updates from the server. */
 public final class SkinMixerClient implements ClientModInitializer {
-	public static final KeyMapping.Category KEY_CATEGORY = new KeyMapping.Category(SkinMixer.id(SkinMixer.MOD_ID));
-	public static final KeyMapping OPEN_MENU = new KeyMapping("key.skinmixer.open", InputConstants.KEY_U, KEY_CATEGORY);
+	public static final KeyMapping OPEN_MENU = new KeyMapping("key.skinmixer.open", InputConstants.KEY_U, "key.categories.skinmixer");
 	private static final int GARBAGE_INTERVAL_TICKS = 200;
 
 	private int ticks;
 
 	@Override
 	public void onInitializeClient() {
-		KeyMapping.Category.register(KEY_CATEGORY.id());
 		KeyBindingHelper.registerKeyBinding(OPEN_MENU);
 
 		ClientPlayNetworking.registerGlobalReceiver(OutfitPayload.TYPE,

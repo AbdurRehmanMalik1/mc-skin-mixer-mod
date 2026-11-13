@@ -28,9 +28,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.PlayerModelType;
-import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.resources.PlayerSkin;
 
 /**
  * Drives the mod in a real client: the menu, the baked skin, the server round trip, and persistence on
@@ -123,7 +122,7 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 			context.waitTicks(5);
 			context.takeScreenshot("worn-own-head");
 			PlayerSkin ownHead = context.computeOnClient(minecraft -> minecraft.player.getSkin());
-			expect(failures, "own head outfit is baked", ownHead.body().texturePath().getNamespace().equals(SkinMixer.MOD_ID));
+			expect(failures, "own head outfit is baked", ownHead.texture().getNamespace().equals(SkinMixer.MOD_ID));
 
 			// The menu again, now showing the worn outfit, then cancel.
 			context.runOnClient(minecraft -> minecraft.options.setCameraType(CameraType.FIRST_PERSON));
@@ -138,7 +137,7 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 			context.waitTicks(5);
 			PlayerSkin reset = context.computeOnClient(minecraft -> minecraft.player.getSkin());
 			expect(failures, "reset command restores the real skin",
-					!reset.body().texturePath().getNamespace().equals(SkinMixer.MOD_ID));
+					!reset.texture().getNamespace().equals(SkinMixer.MOD_ID));
 
 			addByUsername(context, failures);
 		}
@@ -192,8 +191,8 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 			if (fetched == null) {
 				return "added skin not loaded";
 			}
-			AbstractTexture baked = minecraft.getTextureManager().getTexture(skin.body().texturePath());
-			AbstractTexture source = minecraft.getTextureManager().getTexture(fetched.body().texturePath());
+			AbstractTexture baked = minecraft.getTextureManager().getTexture(skin.texture());
+			AbstractTexture source = minecraft.getTextureManager().getTexture(fetched.texture());
 			if (!(baked instanceof DynamicTexture bakedPixels) || !(source instanceof DynamicTexture sourcePixels)) {
 				return "textures have no pixels";
 			}
@@ -235,13 +234,13 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 	private static void checkBaked(ClientGameTestContext context, List<String> failures, String name, boolean slim) {
 		String problem = context.computeOnClient(minecraft -> {
 			PlayerSkin skin = minecraft.player.getSkin();
-			if (!skin.body().texturePath().getNamespace().equals(SkinMixer.MOD_ID)) {
-				return "not baked: " + skin.body().texturePath();
+			if (!skin.texture().getNamespace().equals(SkinMixer.MOD_ID)) {
+				return "not baked: " + skin.texture();
 			}
-			if ((skin.model() == PlayerModelType.SLIM) != slim) {
+			if ((skin.model() == PlayerSkin.Model.SLIM) != slim) {
 				return "wrong arm model " + skin.model();
 			}
-			AbstractTexture texture = minecraft.getTextureManager().getTexture(skin.body().texturePath());
+			AbstractTexture texture = minecraft.getTextureManager().getTexture(skin.texture());
 			if (!(texture instanceof DynamicTexture dynamic) || dynamic.getPixels() == null) {
 				return "baked texture has no pixels";
 			}
@@ -261,7 +260,7 @@ public class SkinMixerClientGameTest implements FabricClientGameTest {
 		expect(failures, name + (problem == null ? "" : ": " + problem), problem == null);
 	}
 
-	private static int pixel(Minecraft minecraft, Identifier texture, int x, int y) {
+	private static int pixel(Minecraft minecraft, ResourceLocation texture, int x, int y) {
 		try (InputStream in = minecraft.getResourceManager().getResource(texture).orElseThrow().open();
 				NativeImage image = NativeImage.read(in)) {
 			return image.getPixel(x, y);

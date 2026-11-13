@@ -15,8 +15,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.player.PlayerSkin;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.resources.PlayerSkin;
 
 /**
  * Who wears what, on this client, and the skin the game should draw for each of them. Fed by the
@@ -47,7 +47,7 @@ public final class ClientOutfits {
 		if (!minecraft.isSameThread()) {
 			return applied != null ? applied.result() : original;
 		}
-		Identifier texture = SkinBaker.bake(outfit, original);
+		ResourceLocation texture = SkinBaker.bake(outfit, original);
 		// A source that can't be read yet (a skin still downloading) shows the real skin; the lookup
 		// is retried when the real skin changes.
 		PlayerSkin result = texture == null ? original : SkinBaker.skinOf(texture, outfit.slim(), original);
