@@ -1,0 +1,91 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"skinmixer" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+
+	// Multiplayer testing on one PC: runServer uses run/, each client gets its own folder and name,
+	// so a server and two clients can run at once and see each other's outfits.
+	runs {
+		client {
+			runDir "run/client1"
+			programArgs "--username", "Player1"
+		}
+		client2 {
+			client()
+			source sourceSets.client
+			name "Minecraft Client 2"
+			runDir "run/client2"
+			programArgs "--username", "Player2"
+		}
+	}
+}
+
+fabricApi {
+	// In-game check: ./gradlew runClientGameTest opens a world and a dedicated server, drives the menu,
+	// checks the baked skin pixel by pixel, and screenshots into build/run/clientGameTest/screenshots.
+	// Source in src/gametest. Opens a game window, so it isn't part of ./gradlew build.
+	configureTests {
+		createSourceSet = true
+		modId = "skinmixer-test"
+		enableGameTests = false
+		eula = true
+	}
+}
+
+// The client test needs the client classes.
+afterEvaluate {
+	sourceSets.gametest.compileClasspath += sourceSets.client.compileClasspath + sourceSets.client.output
+	sourceSets.gametest.runtimeClasspath += sourceSets.client.runtimeClasspath + sourceSets.client.output
+}
+
+dependencies {
+	// To change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+	useJUnitPlatform()
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+	def projectName = project.name
+	inputs.property "projectName", projectName
+
+	from("LICENSE") {
+		rename { "${it}_$projectName"}
+	}
+}

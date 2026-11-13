@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "net.firstwemine1.skinmixer.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"PlayerInfoAccessor",
+		"PlayerInfoMixin",
+		"PlayerSkinWidgetAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
