@@ -41,14 +41,28 @@ Fabric only, one branch per Minecraft version (`fabric/<version>`), all with the
 Before 1.19.3 Minecraft ships only Steve (wide arms) and Alex (slim arms); arms taken from the other
 model are resized. Skins added by username work on every version.
 
-## Testing
+Forge, one branch per Minecraft version (`forge/<version>`), with the same features:
+
+| Minecraft | Branch | Forge | Java | Default skins |
+|---|---|---|---|---|
+| 1.20.1 | `forge/1.20.1` | 47.3.0 | 17 | 9 |
+| 1.19.2 | `forge/1.19.2` | 43.5.2 | 17 | 2 (Steve, Alex) |
+| 1.18.2 | `forge/1.18.2` | 40.3.12 | 17 | 2 (Steve, Alex) |
+| 1.16.5 | `forge/1.16.5` | 36.2.42 | 8 | 2 (Steve, Alex) |
+
+On Forge the mod is optional on either side too: clients without it can join a server with it, and
+the other way round.
+
+## Testing (Forge)
+
+ForgeGradle 6 runs on Gradle 8.6, which needs a JDK no newer than 21 to run (the game itself gets the
+Java version above through a toolchain). In PowerShell: `$env:JAVA_HOME = "C:\Program Files\Java\jdk-21"`.
 
 | Command | What it does |
 |---|---|
-| `./gradlew build` | Compiles and runs the unit tests (slicing and arm resizing). |
-| `./gradlew runClientE2E` | Opens a game window and drives the mod by itself: menu, clicks, pixel checks of the baked skin, a skin added by username. Exits with status 1 if a check fails. Screenshots go to `build/run/clientE2E/screenshots`. (Fabric's client game tests start at 1.21.4, so this version has its own.) |
-| `./gradlew runClient` | Play it yourself (Player1). |
-| `./gradlew runServer`, then `runClient` and `runClient2` | A server and two players on one PC, to see each other's outfits. Connect both to `localhost`. The first `runServer` stops at the EULA: set `eula=true` in `run/eula.txt` and `online-mode=false` in `run/server.properties` (dev clients aren't logged in), then start it again. |
+| `./gradlew build` | Builds the mod jar (`build/libs/skinmixer-<mc>-<version>.jar`) and runs the unit tests. |
+| `./gradlew runClientE2E` | Opens a game window and drives the mod by itself: menu, clicks, pixel checks of the baked skin, a skin added by username. Exits with status 1 if a check fails. Screenshots go to `build/run/clientE2E/screenshots`. |
+| `./gradlew runServer`, then `runClient1` and `runClient2` | A server and two players on one PC (Player1, Player2), to see each other's outfits. Connect both to `localhost`. Set `eula=true` in `run/eula.txt` and `online-mode=false` in `run/server.properties`. |
 
 ## How it works
 
