@@ -2,16 +2,16 @@ package net.firstwemine1.skinmixer.client.gui;
 
 import java.util.function.Supplier;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.util.math.vector.Vector3f;
 import net.firstwemine1.skinmixer.client.PlayerSkin;
-import net.minecraft.Util;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.model.PlayerModel;
+import net.minecraft.util.Util;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.entity.LivingEntity;
 
 /**
  * A rotatable 3D preview of the outfit, with a camera that glides in on the part being edited: the head
@@ -21,7 +21,7 @@ import net.minecraft.world.entity.LivingEntity;
  * versions' preview does: centred, {@code height / 2.125} pixels per model unit. Zooming scales that
  * about the widget's centre, shifts it so the focused part sits in the middle, and clips it.
  */
-public final class OutfitPreview extends AbstractWidget {
+public final class OutfitPreview extends Widget {
 	private static final float MODEL_HEIGHT = 2.125f;
 	/** Full sky and block light, packed. */
 	private static final int FULL_BRIGHT = 15728880;
@@ -45,7 +45,7 @@ public final class OutfitPreview extends AbstractWidget {
 	private long lastFrame = -1;
 
 	public OutfitPreview(int width, int height, Supplier<PlayerSkin> skin) {
-		super(0, 0, width, height, TextComponent.EMPTY);
+		super(0, 0, width, height, StringTextComponent.EMPTY);
 		this.wideModel = new PlayerModel<>(0, false);
 		this.slimModel = new PlayerModel<>(0, true);
 		// Grown-up proportions; models start out as babies.
@@ -69,14 +69,14 @@ public final class OutfitPreview extends AbstractWidget {
 
 	@Override
 	protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
-		rotationX = Mth.clamp(rotationX - (float) dragY * ROTATION_SENSITIVITY, -ROTATION_X_LIMIT, ROTATION_X_LIMIT);
+		rotationX = MathHelper.clamp(rotationX - (float) dragY * ROTATION_SENSITIVITY, -ROTATION_X_LIMIT, ROTATION_X_LIMIT);
 		rotationY += (float) dragX * ROTATION_SENSITIVITY;
 		// The player turned it by hand: leave it where they put it until the next part is framed.
 		autoTurn = false;
 	}
 
 	@Override
-	public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+	public void renderButton(MatrixStack poseStack, int mouseX, int mouseY, float partialTick) {
 			GuiGraphics graphics = new GuiGraphics(poseStack);
 		long now = Util.getMillis();
 		if (lastFrame >= 0) {
@@ -85,7 +85,7 @@ public final class OutfitPreview extends AbstractWidget {
 			focus += (targetFocus - focus) * step;
 			if (autoTurn) {
 				// The short way round, however far it was dragged before.
-				rotationY += Mth.wrapDegrees(targetTurn - rotationY) * step;
+				rotationY += MathHelper.wrapDegrees(targetTurn - rotationY) * step;
 			}
 		}
 		lastFrame = now;
@@ -98,7 +98,7 @@ public final class OutfitPreview extends AbstractWidget {
 		float pixel = scale / PIXELS_PER_UNIT;
 
 		graphics.enableScissor(this.x, this.y, this.x + getWidth(), this.y + getHeight());
-		PoseStack pose = graphics.pose();
+		MatrixStack pose = graphics.pose();
 		pose.pushPose();
 		// The zoom: scale about the centre, shifted so the focused part lands there.
 		pose.translate(centreX, centreY - (focus - MODEL_MIDDLE) * pixel * zoom, 100);

@@ -1,62 +1,58 @@
 package net.firstwemine1.skinmixer.client;
 
-import com.mojang.blaze3d.platform.InputConstants;
-import net.firstwemine1.skinmixer.SkinMixer;
-import java.util.Optional;
-import java.util.UUID;
-
-import net.firstwemine1.skinmixer.outfit.Outfit;
-import net.firstwemine1.skinmixer.outfit.OutfitNetwork;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.Screens;
-import net.minecraft.client.KeyMapping;
-import org.lwjgl.glfw.GLFW;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
 import net.firstwemine1.skinmixer.client.gui.SkinMixerScreen;
-import net.minecraft.client.gui.screens.SkinCustomizationScreen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.screen.CustomizeSkinScreen;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.GuiScreenEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import org.lwjgl.glfw.GLFW;
 
-/** Client entrypoint: the menu key, the menu button in Skin Customization, and outfit updates from the server. */
-public final class SkinMixerClient implements ClientModInitializer {
-	public static final KeyMapping OPEN_MENU = new KeyMapping("key.skinmixer.open", GLFW.GLFW_KEY_U, "key.categories.skinmixer");
+/** Client setup: the menu key, the menu button in Skin Customization, and joining and leaving servers. */
+public final class SkinMixerClient {
+	public static final KeyBinding OPEN_MENU = new KeyBinding("key.skinmixer.open", GLFW.GLFW_KEY_U, "key.categories.skinmixer");
 	private static final int GARBAGE_INTERVAL_TICKS = 200;
 
-	private int ticks;
+	private static int ticks;
 
-	@Override
-	public void onInitializeClient() {
-		KeyBindingHelper.registerKeyBinding(OPEN_MENU);
+	private SkinMixerClient() {
+	}
 
-		ClientPlayNetworking.registerGlobalReceiver(OutfitNetwork.OUTFIT, (client, handler, buf, sender) -> {
-			UUID player = buf.readUUID();
-			Optional<Outfit> outfit = OutfitNetwork.readOptional(buf);
-			client.execute(() -> ClientOutfits.receive(player, outfit));
-		});
-		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+	public static void init(IEventBus modBus) {
+		modBus.addListener((FMLClientSetupEvent event) -> event.enqueueWork(() -> ClientRegistry.registerKeyBinding(OPEN_MENU)));
+
+		MinecraftForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggedInEvent event) -> {
+			Minecraft client = Minecraft.getInstance();
 			if (!ClientOutfits.serverHasMod() && client.player != null) {
 				ClientOutfits.joinedWithoutServerMod(client.player.getUUID());
 			}
 		});
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(ClientOutfits::clear));
+		MinecraftForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggedOutEvent event) ->
+				Minecraft.getInstance().execute(ClientOutfits::clear));
 
-		ClientTickEvents.END_CLIENT_TICK.register(this::tick);
+		MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent event) -> {
+			if (event.phase == TickEvent.Phase.END) {
+				tick(Minecraft.getInstance());
+			}
+		});
 
-		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
-			if (screen instanceof SkinCustomizationScreen && client.player != null) {
-				Screens.getButtons(screen).add(new Button(6, 6, 100, 20, new TranslatableComponent("skinmixer.screen.open"),
-						b -> client.setScreen(new SkinMixerScreen(screen))));
+		MinecraftForge.EVENT_BUS.addListener((GuiScreenEvent.InitGuiEvent.Post event) -> {
+			Minecraft client = Minecraft.getInstance();
+			if (event.getGui() instanceof CustomizeSkinScreen && client.player != null) {
+				event.addWidget(new Button(6, 6, 100, 20, new TranslationTextComponent("skinmixer.screen.open"),
+						b -> client.setScreen(new SkinMixerScreen(event.getGui()))));
 			}
 		});
 	}
 
-	private void tick(Minecraft client) {
+	private static void tick(Minecraft client) {
 		while (OPEN_MENU.consumeClick()) {
 			if (client.player != null && client.screen == null) {
 				client.setScreen(new SkinMixerScreen(null));

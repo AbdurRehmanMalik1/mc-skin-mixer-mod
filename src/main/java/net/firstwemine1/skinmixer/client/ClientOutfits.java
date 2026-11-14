@@ -9,12 +9,11 @@ import java.util.UUID;
 
 import net.firstwemine1.skinmixer.outfit.Outfit;
 import net.firstwemine1.skinmixer.outfit.OutfitNetwork;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.network.play.ClientPlayNetHandler;
+import net.minecraft.client.network.play.NetworkPlayerInfo;
 import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Who wears what, on this client, and the skin the game should draw for each of them. Fed by the
@@ -108,7 +107,7 @@ public final class ClientOutfits {
 	}
 
 	/** The server says what {@code player} wears now. */
-	static void receive(UUID player, Optional<Outfit> outfit) {
+	public static void receive(UUID player, Optional<Outfit> outfit) {
 		if (outfit.isPresent() && outfit.get().isValid()) {
 			OUTFITS.put(player, outfit.get());
 		} else {
@@ -119,7 +118,7 @@ public final class ClientOutfits {
 
 	/** Whether the server has Skin Mixer: if not, outfits are only seen by this client. */
 	public static boolean serverHasMod() {
-		return ClientPlayNetworking.canSend(OutfitNetwork.SET_OUTFIT);
+		return OutfitNetwork.serverHasMod();
 	}
 
 	/**
@@ -133,7 +132,7 @@ public final class ClientOutfits {
 		}
 		LocalOutfit.save(outfit);
 		if (serverHasMod()) {
-			ClientPlayNetworking.send(OutfitNetwork.SET_OUTFIT, OutfitNetwork.setOutfit(Optional.ofNullable(outfit)));
+			OutfitNetwork.sendToServer(Optional.ofNullable(outfit));
 		} else {
 			receive(minecraft.player.getUUID(), Optional.ofNullable(outfit));
 		}
@@ -152,8 +151,8 @@ public final class ClientOutfits {
 
 	/** A player's real skin, ignoring any outfit. */
 	public static PlayerSkin originalSkin(UUID player) {
-		ClientPacketListener connection = Minecraft.getInstance().getConnection();
-		PlayerInfo info = connection == null ? null : connection.getPlayerInfo(player);
+		ClientPlayNetHandler connection = Minecraft.getInstance().getConnection();
+		NetworkPlayerInfo info = connection == null ? null : connection.getPlayerInfo(player);
 		if (info == null) {
 			return new PlayerSkin(DefaultPlayerSkin.getDefaultSkin(player),
 					PlayerSkin.Model.byName(DefaultPlayerSkin.getSkinModelName(player)));
@@ -161,7 +160,7 @@ public final class ClientOutfits {
 		return realSkin(info);
 	}
 
-	private static PlayerSkin realSkin(PlayerInfo info) {
+	private static PlayerSkin realSkin(NetworkPlayerInfo info) {
 		readingRealSkin = true;
 		try {
 			return new PlayerSkin(info.getSkinLocation(), PlayerSkin.Model.byName(info.getModelName()));
@@ -174,7 +173,7 @@ public final class ClientOutfits {
 	 * For the mixin: the skin to draw instead of {@code info}'s real one, or null to draw the real one.
 	 * Called for every skin lookup (every frame, per player), so the no-outfit case returns at once.
 	 */
-	public static PlayerSkin dressed(PlayerInfo info) {
+	public static PlayerSkin dressed(NetworkPlayerInfo info) {
 		if (readingRealSkin || !Minecraft.getInstance().isSameThread()) {
 			return null;
 		}

@@ -3,8 +3,8 @@ package net.firstwemine1.skinmixer.client.gui;
 import java.util.List;
 
 import net.firstwemine1.skinmixer.skin.Part;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 
 /**
  * What the menu is editing: the whole outfit, or one region of the body. Like the categories of a
@@ -42,8 +42,8 @@ public enum Category {
 		return side == Side.RIGHT ? ONE_SIDE_TURN : -ONE_SIDE_TURN;
 	}
 
-	public Component title() {
-		return new TranslatableComponent("skinmixer.category." + key);
+	public ITextComponent title() {
+		return new TranslationTextComponent("skinmixer.category." + key);
 	}
 
 	/** Height on the model the camera centres on, in skin pixels from the top of the head (feet at 32). */
@@ -90,8 +90,8 @@ public enum Category {
 	public enum Side {
 		BOTH, RIGHT, LEFT;
 
-		public Component title() {
-			return new TranslatableComponent("skinmixer.side." + name().toLowerCase(java.util.Locale.ROOT));
+		public ITextComponent title() {
+			return new TranslationTextComponent("skinmixer.side." + name().toLowerCase(java.util.Locale.ROOT));
 		}
 
 		public Side next() {

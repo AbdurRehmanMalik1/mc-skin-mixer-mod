@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.util.InputMappings;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.firstwemine1.skinmixer.client.ClientOutfits;
 import net.firstwemine1.skinmixer.client.RemoteSkins;
 import net.firstwemine1.skinmixer.client.SkinLibrary;
@@ -15,15 +15,15 @@ import net.firstwemine1.skinmixer.client.SkinBaker;
 import net.firstwemine1.skinmixer.client.gui.Category.Side;
 import net.firstwemine1.skinmixer.outfit.Outfit;
 import net.firstwemine1.skinmixer.skin.Part;
-import net.minecraft.client.gui.components.AbstractButton;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.client.gui.widget.button.AbstractButton;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import net.firstwemine1.skinmixer.client.PlayerSkin;
 
 /**
@@ -83,7 +83,7 @@ public final class SkinMixerScreen extends Screen {
 	private int dollPanelHeight;
 
 	public SkinMixerScreen(Screen parent) {
-		super(new TranslatableComponent("skinmixer.screen.title"));
+		super(new TranslationTextComponent("skinmixer.screen.title"));
 		this.parent = parent;
 	}
 
@@ -104,7 +104,7 @@ public final class SkinMixerScreen extends Screen {
 		tooltips.clear();
 		previewed = null;
 
-		int dollScale = Mth.clamp((height - TOP - 110) / PartArt.DOLL_HEIGHT, 2, 5);
+		int dollScale = MathHelper.clamp((height - TOP - 110) / PartArt.DOLL_HEIGHT, 2, 5);
 		sideColumnWidth = Math.max(SIDE_COLUMN_MIN, PartArt.DOLL_WIDTH * dollScale + 12);
 		int gridWidth = COLUMNS * (CARD_WIDTH + CARD_GAP) - CARD_GAP;
 		int total = sideColumnWidth + GAP + PREVIEW_WIDTH + GAP + gridWidth;
@@ -118,17 +118,17 @@ public final class SkinMixerScreen extends Screen {
 		dollPanelHeight = PartArt.DOLL_HEIGHT * dollScale + 10;
 		addButton(new BodyMap(sideColumnX, TOP, sideColumnWidth, dollPanelHeight, dollScale));
 		int y = TOP + dollPanelHeight + 4;
-		armsButton = addButton(button(TextComponent.EMPTY, b -> {
+		armsButton = addButton(button(StringTextComponent.EMPTY, b -> {
 			outfit = outfit.withSlim(!outfit.slim());
 			refresh();
 		}, sideColumnX, y, sideColumnWidth, 20));
-		tooltip(armsButton, new TranslatableComponent("skinmixer.screen.arms.tooltip"));
-		sideButton = addButton(button(TextComponent.EMPTY, b -> {
+		tooltip(armsButton, new TranslationTextComponent("skinmixer.screen.arms.tooltip"));
+		sideButton = addButton(button(StringTextComponent.EMPTY, b -> {
 			side = side.next();
 			preview.frame(category, side, false);
 			refresh();
 		}, sideColumnX, y + 24, sideColumnWidth, 20));
-		tooltip(sideButton, new TranslatableComponent("skinmixer.screen.side.tooltip"));
+		tooltip(sideButton, new TranslationTextComponent("skinmixer.screen.side.tooltip"));
 
 		// Middle: the zooming 3D preview.
 		preview = addButton(new OutfitPreview(PREVIEW_WIDTH, previewHeight, () -> previewSkin));
@@ -149,13 +149,13 @@ public final class SkinMixerScreen extends Screen {
 		int buttonWidth = 90;
 		int buttonsX = width / 2 - (4 * buttonWidth + 3 * 4) / 2;
 		int buttonsY = height - 26;
-		addButton(button(new TranslatableComponent("skinmixer.screen.randomize"), b -> randomize(), buttonsX, buttonsY, buttonWidth, 20));
-		addButton(button(new TranslatableComponent("skinmixer.screen.reset"), b -> {
+		addButton(button(new TranslationTextComponent("skinmixer.screen.randomize"), b -> randomize(), buttonsX, buttonsY, buttonWidth, 20));
+		addButton(button(new TranslationTextComponent("skinmixer.screen.reset"), b -> {
 			outfit = Outfit.ofSelf(selfSlim);
 			refresh();
 		}, buttonsX + (buttonWidth + 4), buttonsY, buttonWidth, 20));
-		addButton(button(new TranslatableComponent("gui.cancel"), b -> onClose(), buttonsX + 2 * (buttonWidth + 4), buttonsY, buttonWidth, 20));
-		addButton(button(new TranslatableComponent("skinmixer.screen.apply"), b -> apply(), buttonsX + 3 * (buttonWidth + 4), buttonsY, buttonWidth, 20));
+		addButton(button(new TranslationTextComponent("gui.cancel"), b -> onClose(), buttonsX + 2 * (buttonWidth + 4), buttonsY, buttonWidth, 20));
+		addButton(button(new TranslationTextComponent("skinmixer.screen.apply"), b -> apply(), buttonsX + 3 * (buttonWidth + 4), buttonsY, buttonWidth, 20));
 
 		refresh();
 	}
@@ -176,7 +176,7 @@ public final class SkinMixerScreen extends Screen {
 	}
 
 	private void layoutCards() {
-		scrollRow = Mth.clamp(scrollRow, 0, Math.max(0, rowCount() - visibleRows));
+		scrollRow = MathHelper.clamp(scrollRow, 0, Math.max(0, rowCount() - visibleRows));
 		for (int i = 0; i < cards.size(); i++) {
 			AbstractButton card = cards.get(i);
 			int row = i / COLUMNS - scrollRow;
@@ -268,7 +268,7 @@ public final class SkinMixerScreen extends Screen {
 	}
 
 	private void refresh() {
-		armsButton.setMessage(new TranslatableComponent(outfit.slim() ? "skinmixer.screen.arms.slim" : "skinmixer.screen.arms.wide"));
+		armsButton.setMessage(new TranslationTextComponent(outfit.slim() ? "skinmixer.screen.arms.slim" : "skinmixer.screen.arms.wide"));
 		sideButton.setMessage(side.title());
 		sideButton.active = category.isPaired();
 		updatePreview();
@@ -329,7 +329,7 @@ public final class SkinMixerScreen extends Screen {
 	}
 
 	@Override
-	public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+	public void render(MatrixStack poseStack, int mouseX, int mouseY, float partialTick) {
 		GuiGraphics graphics = new GuiGraphics(poseStack);
 		// Try on whatever choice is under the cursor.
 		String under = null;
@@ -345,8 +345,8 @@ public final class SkinMixerScreen extends Screen {
 		graphics.fill(preview.x, preview.y, preview.x + preview.getWidth(), preview.y + preview.getHeight(), PANEL);
 		super.render(poseStack, mouseX, mouseY, partialTick);
 		renderTooltips(poseStack, mouseX, mouseY);
-		graphics.drawCenteredString(font, new TranslatableComponent("skinmixer.screen.title_with", title, category.title()), width / 2, 8, WHITE);
-		Component status = new TranslatableComponent(ClientOutfits.serverHasMod()
+		graphics.drawCenteredString(font, new TranslationTextComponent("skinmixer.screen.title_with", title, category.title()), width / 2, 8, WHITE);
+		ITextComponent status = new TranslationTextComponent(ClientOutfits.serverHasMod()
 				? "skinmixer.screen.status.synced" : "skinmixer.screen.status.local");
 		graphics.drawCenteredString(font, status, width / 2, height - 38, GREY);
 		if (rowCount() > visibleRows) {
@@ -358,7 +358,7 @@ public final class SkinMixerScreen extends Screen {
 			graphics.fill(barX, gridY, barX + 3, gridY + barHeight, CARD);
 			graphics.fill(barX, thumbY, barX + 3, thumbY + thumbHeight, GREY);
 		}
-		graphics.drawCenteredString(font, new TranslatableComponent("skinmixer.screen.preview.hint"),
+		graphics.drawCenteredString(font, new TranslationTextComponent("skinmixer.screen.preview.hint"),
 				preview.x + preview.getWidth() / 2, (preview.y + preview.getHeight()) - 11, GREY);
 	}
 
@@ -370,11 +370,11 @@ public final class SkinMixerScreen extends Screen {
 	// ---- widgets ----
 
 	/** The outfit laid flat. Hover a part to highlight it, click it to edit it. */
-	private final class BodyMap extends AbstractWidget {
+	private final class BodyMap extends Widget {
 		private final int scale;
 
 		BodyMap(int x, int y, int width, int height, int scale) {
-			super(x, y, width, height, new TranslatableComponent("skinmixer.screen.body_map"));
+			super(x, y, width, height, new TranslationTextComponent("skinmixer.screen.body_map"));
 			this.scale = scale;
 		}
 
@@ -399,7 +399,7 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+		public void renderButton(MatrixStack poseStack, int mouseX, int mouseY, float partialTick) {
 			GuiGraphics graphics = new GuiGraphics(poseStack);
 			graphics.fill(this.x, this.y, (this.x + getWidth()), (this.y + getHeight()), PANEL);
 			PartArt.drawDoll(graphics, shownTexture(), shownSlim(), dollX(), dollY(), scale);
@@ -441,7 +441,7 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+		public void renderButton(MatrixStack poseStack, int mouseX, int mouseY, float partialTick) {
 			GuiGraphics graphics = new GuiGraphics(poseStack);
 			boolean selected = tab == category;
 			graphics.fill(this.x, this.y, (this.x + getWidth()), (this.y + getHeight()), selected ? TAB_SELECTED : isHovered() ? CARD_HOVER : CARD);
@@ -465,9 +465,9 @@ public final class SkinMixerScreen extends Screen {
 			this.source = source;
 			this.remote = Outfit.mojangPlayer(source);
 			if (Outfit.SELF.equals(source)) {
-				tooltip(this, new TranslatableComponent("skinmixer.screen.own_skin"));
+				tooltip(this, new TranslationTextComponent("skinmixer.screen.own_skin"));
 			} else if (remote != null) {
-				tooltip(this, new TranslatableComponent("skinmixer.screen.added_skin", cardName(source)));
+				tooltip(this, new TranslationTextComponent("skinmixer.screen.added_skin", cardName(source)));
 			}
 		}
 
@@ -490,7 +490,7 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+		public void renderButton(MatrixStack poseStack, int mouseX, int mouseY, float partialTick) {
 			GuiGraphics graphics = new GuiGraphics(poseStack);
 			int x = this.x;
 			int y = this.y;
@@ -521,8 +521,8 @@ public final class SkinMixerScreen extends Screen {
 	/** The last card: add any Minecraft player's skin by username. */
 	private final class AddCard extends AbstractButton {
 		AddCard() {
-			super(0, 0, CARD_WIDTH, CARD_HEIGHT, new TranslatableComponent("skinmixer.screen.add"));
-			tooltip(this, new TranslatableComponent("skinmixer.screen.add.tooltip"));
+			super(0, 0, CARD_WIDTH, CARD_HEIGHT, new TranslationTextComponent("skinmixer.screen.add"));
+			tooltip(this, new TranslationTextComponent("skinmixer.screen.add.tooltip"));
 		}
 
 		@Override
@@ -531,7 +531,7 @@ public final class SkinMixerScreen extends Screen {
 		}
 
 		@Override
-		public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+		public void renderButton(MatrixStack poseStack, int mouseX, int mouseY, float partialTick) {
 			GuiGraphics graphics = new GuiGraphics(poseStack);
 			int x = this.x;
 			int y = this.y;
@@ -547,36 +547,36 @@ public final class SkinMixerScreen extends Screen {
 	}
 
 	/** A card's name for narration and tooltips: the skin's name, or the added player's name. */
-	private static Component cardName(String source) {
+	private static ITextComponent cardName(String source) {
 		UUID remote = Outfit.mojangPlayer(source);
 		if (remote != null) {
 			String name = SkinLibrary.nameOf(remote);
-			return new TextComponent(name != null ? name : remote.toString());
+			return new StringTextComponent(name != null ? name : remote.toString());
 		}
-		return new TranslatableComponent("skinmixer.skin." + source);
+		return new TranslationTextComponent("skinmixer.skin." + source);
 	}
 
 	// ---- widgets on this version ----
 
-	private final java.util.Map<net.minecraft.client.gui.components.AbstractWidget, Component> tooltips = new java.util.LinkedHashMap<>();
+	private final java.util.Map<net.minecraft.client.gui.widget.Widget, ITextComponent> tooltips = new java.util.LinkedHashMap<>();
 
-	private static Button button(Component message, Button.OnPress onPress, int x, int y, int width, int height) {
+	private static Button button(ITextComponent message, Button.IPressable onPress, int x, int y, int width, int height) {
 		return new Button(x, y, width, height, message, onPress);
 	}
 
-	private static void place(net.minecraft.client.gui.components.AbstractWidget widget, int x, int y) {
+	private static void place(net.minecraft.client.gui.widget.Widget widget, int x, int y) {
 		widget.x = x;
 		widget.y = y;
 	}
 
-	private void tooltip(net.minecraft.client.gui.components.AbstractWidget widget, Component text) {
+	private void tooltip(net.minecraft.client.gui.widget.Widget widget, ITextComponent text) {
 		tooltips.put(widget, text);
 	}
 
 	/** Draws the tooltip of whichever widget is under the cursor; this version's widgets have none of their own. */
-	private void renderTooltips(PoseStack poseStack, int mouseX, int mouseY) {
-		for (java.util.Map.Entry<net.minecraft.client.gui.components.AbstractWidget, Component> entry : tooltips.entrySet()) {
-			net.minecraft.client.gui.components.AbstractWidget widget = entry.getKey();
+	private void renderTooltips(MatrixStack poseStack, int mouseX, int mouseY) {
+		for (java.util.Map.Entry<net.minecraft.client.gui.widget.Widget, ITextComponent> entry : tooltips.entrySet()) {
+			net.minecraft.client.gui.widget.Widget widget = entry.getKey();
 			if (widget.visible && widget.isMouseOver(mouseX, mouseY)) {
 				renderTooltip(poseStack, font.split(entry.getValue(), 200), mouseX, mouseY);
 				return;

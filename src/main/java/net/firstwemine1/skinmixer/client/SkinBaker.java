@@ -11,19 +11,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.renderer.texture.NativeImage;
 import net.firstwemine1.skinmixer.SkinMixer;
 import net.firstwemine1.skinmixer.outfit.Outfit;
 import net.firstwemine1.skinmixer.skin.Part;
 import net.firstwemine1.skinmixer.skin.SkinCompositor;
 import net.firstwemine1.skinmixer.skin.SkinCompositor.SourceSkin;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.renderer.texture.Texture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.client.renderer.texture.HttpTexture;
+import net.minecraft.client.renderer.texture.DownloadingTexture;
 import net.firstwemine1.skinmixer.client.mixin.HttpTextureAccessor;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.IResource;
 
 /**
  * Turns outfits into ordinary 64×64 skin textures. The game then draws the baked texture exactly as it
@@ -163,7 +163,7 @@ public final class SkinBaker {
 			return cached;
 		}
 		if (minecraft.getResourceManager().hasResource(path)) {
-			try (Resource resource = minecraft.getResourceManager().getResource(path);
+			try (IResource resource = minecraft.getResourceManager().getResource(path);
 					InputStream in = resource.getInputStream(); NativeImage image = NativeImage.read(in)) {
 				int[] pixels = toPixels(image);
 				if (pixels != null) {
@@ -175,11 +175,11 @@ public final class SkinBaker {
 				return null;
 			}
 		}
-		AbstractTexture texture = minecraft.getTextureManager().getTexture(path);
+		Texture texture = minecraft.getTextureManager().getTexture(path);
 		if (texture instanceof DynamicTexture && ((DynamicTexture) texture).getPixels() != null) {
 			return toPixels(((DynamicTexture) texture).getPixels());
 		}
-		if (texture instanceof HttpTexture) {
+		if (texture instanceof DownloadingTexture) {
 			return downloadedPixels(((HttpTextureAccessor) texture).skinmixer$file());
 		}
 		return null;

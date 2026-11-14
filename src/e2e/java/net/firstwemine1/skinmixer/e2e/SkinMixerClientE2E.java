@@ -9,8 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.firstwemine1.skinmixer.SkinMixer;
 import net.firstwemine1.skinmixer.client.ClientOutfits;
 import net.firstwemine1.skinmixer.client.RemoteSkins;
@@ -19,21 +17,21 @@ import net.firstwemine1.skinmixer.client.SkinLibrary;
 import net.firstwemine1.skinmixer.client.gui.SkinMixerScreen;
 import net.firstwemine1.skinmixer.outfit.Outfit;
 import net.firstwemine1.skinmixer.skin.Part;
-import net.minecraft.client.CameraType;
+import net.minecraft.client.settings.PointOfView;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.renderer.texture.Texture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.firstwemine1.skinmixer.client.PlayerSkin;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Scripted client check for the versions without Fabric's client game tests: opens a world, drives the
  * menu with clicks, checks the baked skin pixel by pixel, adds a skin by username, and screenshots to
  * build/run/clientE2E/screenshots. Run with ./gradlew runClientE2E; exits with status 1 if a check fails.
  */
-public class SkinMixerClientE2E implements ClientModInitializer {
+public class SkinMixerClientE2E {
 	private static final int STEP_TIMEOUT = 600;
 	private static final List<String> MIX = Arrays.asList("alex", "steve", "alex", "alex", "steve", "steve");
 
@@ -54,16 +52,14 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		}
 	}
 
-	@Override
-	public void onInitializeClient() {
-		if (!Boolean.getBoolean("skinmixer.clientE2E")) {
-			return;
-		}
+	public SkinMixerClientE2E() {
 		script();
-		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-			client = mc;
-			tick();
-		});
+	}
+
+	/** Once per client tick, at the end of the tick. */
+	public void tick(Minecraft mc) {
+		client = mc;
+		tick();
 	}
 
 	private void script() {
@@ -98,7 +94,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		wait("the mix to be worn", () -> MIX.equals(worn()));
 		pause(5);
 		run("check the baked mix", () -> checkBaked(false));
-		run("third person", () -> client.options.setCameraType(CameraType.THIRD_PERSON_FRONT));
+		run("third person", () -> client.options.setCameraType(PointOfView.THIRD_PERSON_FRONT));
 		pause(10);
 		screenshot("worn-wide-mix");
 
@@ -140,7 +136,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		});
 		screenshot("worn-added-head");
 		run("menu with the added skin", () -> {
-			client.options.setCameraType(CameraType.FIRST_PERSON);
+			client.options.setCameraType(PointOfView.FIRST_PERSON);
 			client.setScreen(new SkinMixerScreen(null));
 		});
 		pause(5);
@@ -163,7 +159,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		PlayerSkin skin = drawnSkin();
 		check(isBaked(skin), "mix is baked");
 		check((skin.model() == PlayerSkin.Model.SLIM) == slim, "arm model is " + (slim ? "slim" : "wide"));
-		AbstractTexture texture = client.getTextureManager().getTexture(skin.texture());
+		Texture texture = client.getTextureManager().getTexture(skin.texture());
 		if (!(texture instanceof DynamicTexture) || ((DynamicTexture) texture).getPixels() == null) {
 			fail("baked texture has no pixels");
 			return;
@@ -185,7 +181,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 			return;
 		}
 		int[] source = SkinBaker.texturePixels(fetched.texture());
-		AbstractTexture texture = client.getTextureManager().getTexture(skin.texture());
+		Texture texture = client.getTextureManager().getTexture(skin.texture());
 		if (source == null || !(texture instanceof DynamicTexture)) {
 			fail("added skin has no pixels");
 			return;
@@ -221,7 +217,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 	/** Clicks the widget labelled {@code label} on the open screen, at its centre. */
 	private void click(String label) {
 		run("click " + label, () -> {
-			for (AbstractWidget widget : Versioned.widgets(client)) {
+			for (Widget widget : Versioned.widgets(client)) {
 				if (widget.visible && widget.getMessage().getString().equals(label)) {
 					double x = widget.x + widget.getWidth() / 2.0;
 					double y = widget.y + widget.getHeight() / 2.0;

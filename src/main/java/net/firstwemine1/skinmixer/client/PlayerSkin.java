@@ -1,6 +1,6 @@
 package net.firstwemine1.skinmixer.client;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * A skin as this version of Minecraft knows it: a texture, and the arm model ("default" or "slim").

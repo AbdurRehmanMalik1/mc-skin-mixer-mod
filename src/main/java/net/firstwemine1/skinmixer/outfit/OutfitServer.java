@@ -8,19 +8,21 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.mojang.brigadier.CommandDispatcher;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
+import net.minecraft.command.arguments.EntityArgument;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.world.storage.FolderName;
 
 /**
  * The server half: keeps every player's outfit, and tells every client with the mod who wears what.
@@ -39,31 +41,41 @@ public final class OutfitServer {
 	}
 
 	public static void register() {
-		ServerPlayNetworking.registerGlobalReceiver(OutfitNetwork.SET_OUTFIT, (server, player, handler, buf, sender) -> {
-			Optional<Outfit> outfit = OutfitNetwork.readOptional(buf);
-			server.execute(() -> requestChange(player, outfit));
-		});
-		ServerLifecycleEvents.SERVER_STARTED.register(server -> store = OutfitStore.load(server.getWorldPath(LevelResource.ROOT)));
-		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+		MinecraftForge.EVENT_BUS.addListener((FMLServerStartedEvent event) -> store = OutfitStore.load(event.getServer().getWorldPath(FolderName.ROOT)));
+		MinecraftForge.EVENT_BUS.addListener((FMLServerStoppedEvent event) -> {
 			store = null;
 			LAST_CHANGE.clear();
 			PENDING.clear();
 		});
-		ServerTickEvents.END_SERVER_TICK.register(OutfitServer::tick);
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> onJoin(handler.player, server));
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-			// A change still waiting is applied anyway: the player pressed Apply before leaving.
-			Optional<Outfit> waiting = PENDING.remove(handler.player.getUUID());
-			if (waiting != null) {
-				setOutfit(server, handler.player.getUUID(), waiting.orElse(null));
+		MinecraftForge.EVENT_BUS.addListener((TickEvent.ServerTickEvent event) -> {
+			MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+			if (event.phase == TickEvent.Phase.END && server != null) {
+				tick(server);
 			}
-			LAST_CHANGE.remove(handler.player.getUUID());
 		});
-		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> registerCommands(dispatcher));
+		MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
+			if (event.getPlayer() instanceof ServerPlayerEntity) {
+				ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
+				onJoin(player, player.server);
+			}
+		});
+		MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> {
+			if (!(event.getPlayer() instanceof ServerPlayerEntity)) {
+				return;
+			}
+			ServerPlayerEntity player = (ServerPlayerEntity) event.getPlayer();
+			// A change still waiting is applied anyway: the player pressed Apply before leaving.
+			Optional<Outfit> waiting = PENDING.remove(player.getUUID());
+			if (waiting != null) {
+				setOutfit(player.server, player.getUUID(), waiting.orElse(null));
+			}
+			LAST_CHANGE.remove(player.getUUID());
+		});
+		MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> registerCommands(event.getDispatcher()));
 	}
 
 	/** A client pressed Apply. */
-	private static void requestChange(ServerPlayer player, Optional<Outfit> outfit) {
+	public static void requestChange(ServerPlayerEntity player, Optional<Outfit> outfit) {
 		if (store == null) {
 			return;
 		}
@@ -103,18 +115,18 @@ public final class OutfitServer {
 			return;
 		}
 		store.put(player, outfit);
-		for (ServerPlayer viewer : server.getPlayerList().getPlayers()) {
+		for (ServerPlayerEntity viewer : server.getPlayerList().getPlayers()) {
 			sendTo(viewer, player, Optional.ofNullable(outfit));
 		}
 	}
 
 	/** The newcomer learns everyone's outfit; everyone else learns the newcomer's. */
-	private static void onJoin(ServerPlayer joined, MinecraftServer server) {
+	private static void onJoin(ServerPlayerEntity joined, MinecraftServer server) {
 		if (store == null) {
 			return;
 		}
 		Outfit own = store.get(joined.getUUID());
-		for (ServerPlayer other : server.getPlayerList().getPlayers()) {
+		for (ServerPlayerEntity other : server.getPlayerList().getPlayers()) {
 			if (other == joined) {
 				continue;
 			}
@@ -131,30 +143,30 @@ public final class OutfitServer {
 		}
 	}
 
-	private static void sendTo(ServerPlayer viewer, UUID player, Optional<Outfit> outfit) {
-		if (ServerPlayNetworking.canSend(viewer, OutfitNetwork.OUTFIT)) {
-			ServerPlayNetworking.send(viewer, OutfitNetwork.OUTFIT, OutfitNetwork.outfit(player, outfit));
+	private static void sendTo(ServerPlayerEntity viewer, UUID player, Optional<Outfit> outfit) {
+		if (OutfitNetwork.canSend(viewer)) {
+			OutfitNetwork.sendTo(viewer, player, outfit);
 		}
 	}
 
 	/** {@code /skinmixer reset} for yourself; {@code /skinmixer reset <players>} for operators. */
-	private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+	private static void registerCommands(CommandDispatcher<CommandSource> dispatcher) {
 		dispatcher.register(Commands.literal("skinmixer")
 				.then(Commands.literal("reset")
 						.executes(context -> {
-							ServerPlayer player = context.getSource().getPlayerOrException();
+							ServerPlayerEntity player = context.getSource().getPlayerOrException();
 							setOutfit(context.getSource().getServer(), player.getUUID(), null);
-							context.getSource().sendSuccess(new TextComponent("Your outfit was reset to your own skin."), false);
+							context.getSource().sendSuccess(new StringTextComponent("Your outfit was reset to your own skin."), false);
 							return 1;
 						})
 						.then(Commands.argument("players", EntityArgument.players())
 								.requires(source -> source.hasPermission(2))
 								.executes(context -> {
-									Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
-									for (ServerPlayer player : players) {
+									Collection<ServerPlayerEntity> players = EntityArgument.getPlayers(context, "players");
+									for (ServerPlayerEntity player : players) {
 										setOutfit(context.getSource().getServer(), player.getUUID(), null);
 									}
-									context.getSource().sendSuccess(new TextComponent("Reset the outfit of " + players.size() + " player(s)."), true);
+									context.getSource().sendSuccess(new StringTextComponent("Reset the outfit of " + players.size() + " player(s)."), true);
 									return players.size();
 								}))));
 	}
