@@ -69,7 +69,7 @@ public final class OutfitServer {
 		if (outfit.isPresent() && !outfit.get().isValid()) {
 			return;
 		}
-		MinecraftServer server = player.level().getServer();
+		MinecraftServer server = player.server;
 		Integer last = LAST_CHANGE.get(player.getUUID());
 		if (last != null && server.getTickCount() - last < CHANGE_COOLDOWN_TICKS) {
 			// Too soon: the newest request waits for the cooldown, and replaces any older waiting one.
@@ -143,7 +143,7 @@ public final class OutfitServer {
 						.executes(context -> {
 							ServerPlayer player = context.getSource().getPlayerOrException();
 							setOutfit(context.getSource().getServer(), player.getUUID(), null);
-							context.getSource().sendSuccess(() -> Component.literal("Your outfit was reset to your own skin."), false);
+							context.getSource().sendSuccess(Component.literal("Your outfit was reset to your own skin."), false);
 							return 1;
 						})
 						.then(Commands.argument("players", EntityArgument.players())
@@ -153,8 +153,7 @@ public final class OutfitServer {
 									for (ServerPlayer player : players) {
 										setOutfit(context.getSource().getServer(), player.getUUID(), null);
 									}
-									context.getSource().sendSuccess(
-											() -> Component.literal("Reset the outfit of " + players.size() + " player(s)."), true);
+									context.getSource().sendSuccess(Component.literal("Reset the outfit of " + players.size() + " player(s)."), true);
 									return players.size();
 								}))));
 	}

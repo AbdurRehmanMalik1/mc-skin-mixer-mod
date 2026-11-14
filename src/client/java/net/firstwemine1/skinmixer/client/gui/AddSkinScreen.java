@@ -1,8 +1,8 @@
 package net.firstwemine1.skinmixer.client.gui;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.firstwemine1.skinmixer.client.RemoteSkins;
 import net.firstwemine1.skinmixer.client.SkinLibrary;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -36,12 +36,9 @@ public final class AddSkinScreen extends Screen {
 		int y = height / 2 - 30;
 		name = addRenderableWidget(new EditBox(font, x, y, 200, 20, Component.translatable("skinmixer.add.name")));
 		name.setMaxLength(16);
-		name.setHint(Component.translatable("skinmixer.add.name"));
 		name.setResponder(text -> updateButtons());
-		add = addRenderableWidget(Button.builder(Component.translatable("skinmixer.add.button"), b -> lookUp())
-				.bounds(x, y + 44, 98, 20).build());
-		addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), b -> onClose())
-				.bounds(x + 102, y + 44, 98, 20).build());
+		add = addRenderableWidget(button(Component.translatable("skinmixer.add.button"), b -> lookUp(), x, y + 44, 98, 20));
+		addRenderableWidget(button(Component.translatable("gui.cancel"), b -> onClose(), x + 102, y + 44, 98, 20));
 		setInitialFocus(name);
 		updateButtons();
 	}
@@ -83,9 +80,11 @@ public final class AddSkinScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-		renderBackground(graphics);
-		super.render(graphics, mouseX, mouseY, partialTick);
+	public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+		GuiGraphics graphics = new GuiGraphics(poseStack);
+		renderBackground(poseStack);
+		super.render(poseStack, mouseX, mouseY, partialTick);
+		renderTooltips(poseStack, mouseX, mouseY);
 		graphics.drawCenteredString(font, title, width / 2, height / 2 - 70, WHITE);
 		graphics.drawCenteredString(font, Component.translatable("skinmixer.add.help"), width / 2, height / 2 - 52, GREY);
 		graphics.drawCenteredString(font, status, width / 2, height / 2 - 2, statusColour);
@@ -99,5 +98,33 @@ public final class AddSkinScreen extends Screen {
 	/** A possible Minecraft username: 1 to 16 letters, digits and underscores. */
 	private static boolean isValidName(String name) {
 		return name.matches("[A-Za-z0-9_]{1,16}");
+	}
+
+	// ---- widgets on this version ----
+
+	private final java.util.Map<net.minecraft.client.gui.components.AbstractWidget, Component> tooltips = new java.util.LinkedHashMap<>();
+
+	private static Button button(Component message, Button.OnPress onPress, int x, int y, int width, int height) {
+		return new Button(x, y, width, height, message, onPress);
+	}
+
+	private static void place(net.minecraft.client.gui.components.AbstractWidget widget, int x, int y) {
+		widget.x = x;
+		widget.y = y;
+	}
+
+	private void tooltip(net.minecraft.client.gui.components.AbstractWidget widget, Component text) {
+		tooltips.put(widget, text);
+	}
+
+	/** Draws the tooltip of whichever widget is under the cursor; this version's widgets have none of their own. */
+	private void renderTooltips(PoseStack poseStack, int mouseX, int mouseY) {
+		for (java.util.Map.Entry<net.minecraft.client.gui.components.AbstractWidget, Component> entry : tooltips.entrySet()) {
+			net.minecraft.client.gui.components.AbstractWidget widget = entry.getKey();
+			if (widget.visible && widget.isMouseOver(mouseX, mouseY)) {
+				renderTooltip(poseStack, font.split(entry.getValue(), 200), mouseX, mouseY);
+				return;
+			}
+		}
 	}
 }

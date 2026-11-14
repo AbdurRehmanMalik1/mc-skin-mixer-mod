@@ -11,11 +11,11 @@ import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
-import net.minecraft.world.level.WorldDataConfiguration;
-import net.minecraft.world.level.levelgen.WorldOptions;
+import net.minecraft.world.level.DataPackConfig;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 
-/** The calls {@link SkinMixerClientE2E} makes that differ between Minecraft versions (this is 1.20.1). */
+/** The calls {@link SkinMixerClientE2E} makes that differ between Minecraft versions (this is 1.19.2). */
 final class Versioned {
 	private Versioned() {
 	}
@@ -30,9 +30,10 @@ final class Versioned {
 		rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, null);
 		rules.getRule(GameRules.RULE_DAYLIGHT).set(false, null);
 		LevelSettings settings = new LevelSettings("skinmixerE2E" + System.currentTimeMillis(), GameType.CREATIVE, false,
-				Difficulty.PEACEFUL, true, rules, WorldDataConfiguration.DEFAULT);
-		client.createWorldOpenFlows().createFreshLevel(settings.levelName(), settings, new WorldOptions(1, false, false),
-				WorldPresets::createNormalWorldDimensions);
+				Difficulty.PEACEFUL, true, rules, DataPackConfig.DEFAULT);
+		RegistryAccess registries = RegistryAccess.BUILTIN.get();
+		client.createWorldOpenFlows().createFreshLevel(settings.levelName(), settings, registries,
+				WorldPresets.createNormalWorldFromPreset(registries, 1));
 		return true;
 	}
 

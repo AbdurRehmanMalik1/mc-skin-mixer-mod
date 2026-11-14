@@ -35,7 +35,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class SkinMixerClientE2E implements ClientModInitializer {
 	private static final int STEP_TIMEOUT = 600;
-	private static final List<String> MIX = Arrays.asList("kai", "steve", "zuri", "zuri", "alex", "alex");
+	private static final List<String> MIX = Arrays.asList("alex", "steve", "alex", "alex", "steve", "steve");
 
 	private final Deque<Step> steps = new ArrayDeque<>();
 	private final List<String> failures = new ArrayList<>();
@@ -80,9 +80,9 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		click("Head");
 		pause(10);
 		screenshot("tab-head");
-		click("Kai");
+		click("Alex");
 		click("Arms");
-		click("Zuri");
+		click("Steve");
 		pause(10);
 		screenshot("tab-arms-zuri");
 		click("Legs");
@@ -91,7 +91,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		click("Apply");
 		wait("the picked outfit to come back from the server", () -> ClientOutfits.get(self()) != null);
 		run("picked outfit", () -> check(ClientOutfits.get(self()).parts().equals(
-				Arrays.asList("kai", "self", "zuri", "zuri", "self", "self")), "picked head and arms are worn"));
+				Arrays.asList("alex", "self", "steve", "steve", "self", "self")), "picked head and arms are worn"));
 
 		pause(12);
 		run("wear a known mix", () -> ClientOutfits.choose(new Outfit(false, MIX)));
@@ -111,7 +111,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 
 		pause(12);
 		run("own head on another body", () -> ClientOutfits.choose(
-				new Outfit(false, Arrays.asList("self", "noor", "noor", "noor", "noor", "noor"))));
+				new Outfit(false, Arrays.asList("self", "steve", "steve", "steve", "steve", "steve"))));
 		wait("own head outfit", () -> "self".equals(firstPart()));
 		pause(5);
 		run("own head is baked", () -> check(isBaked(drawnSkin()), "own head outfit is baked"));
@@ -223,8 +223,8 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		run("click " + label, () -> {
 			for (AbstractWidget widget : Versioned.widgets(client)) {
 				if (widget.visible && widget.getMessage().getString().equals(label)) {
-					double x = widget.getX() + widget.getWidth() / 2.0;
-					double y = widget.getY() + widget.getHeight() / 2.0;
+					double x = widget.x + widget.getWidth() / 2.0;
+					double y = widget.y + widget.getHeight() / 2.0;
 					Screen screen = client.screen;
 					screen.mouseClicked(x, y, 0);
 					// The click may have closed the screen (Apply, Cancel): the release still goes to it.

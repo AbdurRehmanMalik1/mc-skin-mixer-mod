@@ -22,9 +22,8 @@ import net.firstwemine1.skinmixer.skin.Part;
 public record Outfit(boolean slim, List<String> parts) {
 	/** The player's own real skin. On each client it means the wearer's skin, not the viewer's. */
 	public static final String SELF = "self";
-	/** The default skins every Minecraft client ships, in a wide and a slim version each. */
-	public static final List<String> DEFAULT_SKINS =
-			List.of("steve", "alex", "ari", "efe", "kai", "makena", "noor", "sunny", "zuri");
+	/** The default skins this version of Minecraft ships: Steve (wide arms) and Alex (slim arms). */
+	public static final List<String> DEFAULT_SKINS = List.of("steve", "alex");
 	/** The built-in skin ids: the wearer's own skin first, then the defaults. */
 	public static final List<String> SOURCES;
 	/**

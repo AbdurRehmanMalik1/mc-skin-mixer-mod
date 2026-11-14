@@ -4,7 +4,6 @@ import java.util.List;
 
 import net.firstwemine1.skinmixer.skin.Part;
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
 /**

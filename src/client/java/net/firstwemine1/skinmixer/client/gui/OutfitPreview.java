@@ -4,10 +4,9 @@ import java.util.function.Supplier;
 
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import com.mojang.math.Vector3f;
 import net.firstwemine1.skinmixer.client.PlayerSkin;
 import net.minecraft.Util;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.model.PlayerModel;
@@ -80,7 +79,8 @@ public final class OutfitPreview extends AbstractWidget {
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+	public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
+			GuiGraphics graphics = new GuiGraphics(poseStack);
 		long now = Util.getMillis();
 		if (lastFrame >= 0) {
 			float step = 1 - (float) Math.exp(-(now - lastFrame) / EASE_MILLIS);
@@ -95,12 +95,12 @@ public final class OutfitPreview extends AbstractWidget {
 
 		PlayerSkin current = skin.get();
 		PlayerModel<LivingEntity> model = current.model() == PlayerSkin.Model.SLIM ? slimModel : wideModel;
-		float centreX = getX() + getWidth() / 2f;
-		float centreY = getY() + getHeight() / 2f;
+		float centreX = this.x + getWidth() / 2f;
+		float centreY = this.y + getHeight() / 2f;
 		float scale = getHeight() / MODEL_HEIGHT;
 		float pixel = scale / PIXELS_PER_UNIT;
 
-		graphics.enableScissor(getX(), getY(), getX() + getWidth(), getY() + getHeight());
+		graphics.enableScissor(this.x, this.y, this.x + getWidth(), this.y + getHeight());
 		PoseStack pose = graphics.pose();
 		pose.pushPose();
 		// The zoom: scale about the centre, shifted so the focused part lands there.
@@ -110,10 +110,12 @@ public final class OutfitPreview extends AbstractWidget {
 		pose.translate(0, getHeight() / 2f, 0);
 		pose.scale(scale, scale, -scale);
 		pose.translate(0, -0.0625f, 0);
-		pose.rotateAround(Axis.XP.rotationDegrees(rotationX), 0, -1.0625f, 0);
+		pose.translate(0, -1.0625f, 0);
+		pose.mulPose(Vector3f.XP.rotationDegrees(rotationX));
+		pose.translate(0, 1.0625f, 0);
 		// Without newer versions' z flip, turning goes the other way round: negated so positive still turns
 		// the player's right side forward, as on every version.
-		pose.mulPose(Axis.YP.rotationDegrees(-rotationY));
+		pose.mulPose(Vector3f.YP.rotationDegrees(-rotationY));
 		graphics.flush();
 		Lighting.setupForEntityInInventory();
 
@@ -130,6 +132,6 @@ public final class OutfitPreview extends AbstractWidget {
 	}
 
 	@Override
-	protected void updateWidgetNarration(NarrationElementOutput output) {
+	public void updateNarration(NarrationElementOutput output) {
 	}
 }

@@ -15,7 +15,6 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.firstwemine1.skinmixer.SkinMixer;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.core.UUIDUtil;
 
 /**
  * The skins this player added to the mixer by username, kept in {@code config/skinmixer-library.json}.
@@ -25,7 +24,7 @@ public final class SkinLibrary {
 	/** One added skin. */
 	public record Entry(UUID id, String name) {
 		static final Codec<Entry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-				UUIDUtil.STRING_CODEC.fieldOf("id").forGetter(Entry::id),
+				Codec.STRING.xmap(UUID::fromString, UUID::toString).fieldOf("id").forGetter(Entry::id),
 				Codec.STRING.fieldOf("name").forGetter(Entry::name)
 		).apply(instance, Entry::new));
 	}

@@ -14,11 +14,10 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import net.firstwemine1.skinmixer.SkinMixer;
-import net.minecraft.core.UUIDUtil;
 
 /** Every player's outfit on this server, saved in the world folder as {@code skinmixer/outfits.json}. */
 public final class OutfitStore {
-	private static final Codec<Map<UUID, Outfit>> CODEC = Codec.unboundedMap(UUIDUtil.STRING_CODEC, Outfit.CODEC);
+	private static final Codec<Map<UUID, Outfit>> CODEC = Codec.unboundedMap(Codec.STRING.xmap(UUID::fromString, UUID::toString), Outfit.CODEC);
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
 	private final Path file;

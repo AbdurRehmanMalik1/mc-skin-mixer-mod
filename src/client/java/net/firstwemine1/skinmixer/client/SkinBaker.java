@@ -43,9 +43,14 @@ public final class SkinBaker {
 	private SkinBaker() {
 	}
 
-	/** The default skin {@code name}'s texture, in the wide or slim version. */
+	/** The default skin {@code name}'s texture. This version has one file per skin, whatever the arm model. */
 	public static ResourceLocation defaultTexture(String name, boolean slim) {
-		return new ResourceLocation("textures/entity/player/" + (slim ? "slim/" : "wide/") + name + ".png");
+		return new ResourceLocation("textures/entity/" + name + ".png");
+	}
+
+	/** Whether a default skin's arms are slim: only Alex's, on this version. */
+	public static boolean defaultSlim(String name, boolean wanted) {
+		return "alex".equals(name);
 	}
 
 	/** A {@link PlayerSkin} drawing {@code texture}, keeping the cape and elytra of {@code base}. */
@@ -142,9 +147,9 @@ public final class SkinBaker {
 			int[] pixels = texturePixels(skin.texture());
 			return pixels == null ? null : new SourceSkin(pixels, skin.model() == PlayerSkin.Model.SLIM);
 		}
-		// Default skins come in both models, so the arms never need resizing.
+		// One model per default skin here: arms from the other model are resized.
 		int[] pixels = texturePixels(defaultTexture(id, slim));
-		return pixels == null ? null : new SourceSkin(pixels, slim);
+		return pixels == null ? null : new SourceSkin(pixels, defaultSlim(id, slim));
 	}
 
 	/**

@@ -48,8 +48,8 @@ public final class SkinMixerClient implements ClientModInitializer {
 
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (screen instanceof SkinCustomizationScreen && client.player != null) {
-				Screens.getButtons(screen).add(Button.builder(Component.translatable("skinmixer.screen.open"),
-						b -> client.setScreen(new SkinMixerScreen(screen))).bounds(6, 6, 100, 20).build());
+				Screens.getButtons(screen).add(new Button(6, 6, 100, 20, Component.translatable("skinmixer.screen.open"),
+						b -> client.setScreen(new SkinMixerScreen(screen))));
 			}
 		});
 	}
