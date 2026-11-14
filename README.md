@@ -25,12 +25,28 @@ Customization → Skin Mixer...*. The menu works like a character creator:
 - **Randomize**, **Reset to my skin**, **Cancel**, **Apply**.
 - Server operators: `/skinmixer reset <players>`. Anyone: `/skinmixer reset` for themselves.
 
+## Versions
+
+Fabric only, one branch per Minecraft version (`fabric/<version>`), all with the same features.
+
+| Minecraft | Branch | Java | Default skins | Automated check |
+|---|---|---|---|---|
+| 26.3, 26.2, 26.1.2 | `fabric/26.x` | 25 | 9 | `runClientGameTest` |
+| 1.21.11, 1.21.4 | `fabric/1.21.x` | 21 | 9 | `runClientGameTest` |
+| 1.21.1 | `fabric/1.21.1` | 21 | 9 | `runClientE2E` |
+| 1.20.1 | `fabric/1.20.1` | 17 | 9 | `runClientE2E` |
+| 1.19.2, 1.18.2 | `fabric/1.19.2`, `fabric/1.18.2` | 17 | 2 (Steve, Alex) | `runClientE2E` |
+| 1.16.5 | `fabric/1.16.5` | 8 | 2 (Steve, Alex) | `runClientE2E` |
+
+Before 1.19.3 Minecraft ships only Steve (wide arms) and Alex (slim arms); arms taken from the other
+model are resized. Skins added by username work on every version.
+
 ## Testing
 
 | Command | What it does |
 |---|---|
 | `./gradlew build` | Compiles and runs the unit tests (slicing and arm resizing). |
-| `./gradlew runClientGameTest` | Opens a game window and drives the mod by itself: menu, clicks, pixel checks of the baked skin, a dedicated server and reconnecting. Screenshots go to `build/run/clientGameTest/screenshots`. |
+| `./gradlew runClientE2E` | Opens a game window and drives the mod by itself: menu, clicks, pixel checks of the baked skin, a skin added by username. Exits with status 1 if a check fails. Screenshots go to `build/run/clientE2E/screenshots`. (Fabric's client game tests start at 1.21.4, so this version has its own.) |
 | `./gradlew runClient` | Play it yourself (Player1). |
 | `./gradlew runServer`, then `runClient` and `runClient2` | A server and two players on one PC, to see each other's outfits. Connect both to `localhost`. The first `runServer` stops at the EULA: set `eula=true` in `run/eula.txt` and `online-mode=false` in `run/server.properties` (dev clients aren't logged in), then start it again. |
 
