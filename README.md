@@ -53,6 +53,19 @@ Forge, one branch per Minecraft version (`forge/<version>`), with the same featu
 On Forge the mod is optional on either side too: clients without it can join a server with it, and
 the other way round.
 
+NeoForge, one branch per Minecraft version (`neoforge/<version>`), with the same features:
+
+| Minecraft | Branch | NeoForge | Java |
+|---|---|---|---|
+| 26.3 | `neoforge/26.3` | 26.3.0.22-beta | 25 |
+| 26.2 | `neoforge/26.2` | 26.2.0.59 | 25 |
+| 26.1.2 | `neoforge/26.1.2` | 26.1.2.68-beta | 25 |
+| 1.21.11 | `neoforge/1.21.11` | 21.11.42 | 21 |
+| 1.21.4 | `neoforge/1.21.4` | 21.4.158 | 21 |
+| 1.21.1 | `neoforge/1.21.1` | 21.1.238 | 21 |
+
+All nine default skins on every NeoForge version, and the mod is optional on either side.
+
 ## Testing
 
 | Command | What it does |
