@@ -10,8 +10,8 @@ import java.util.UUID;
 import net.firstwemine1.skinmixer.client.mixin.PlayerInfoAccessor;
 import net.firstwemine1.skinmixer.outfit.Outfit;
 import net.firstwemine1.skinmixer.outfit.SetOutfitPayload;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.resources.DefaultPlayerSkin;
@@ -60,7 +60,7 @@ public final class ClientOutfits {
 	}
 
 	/** The server says what {@code player} wears now. */
-	static void receive(UUID player, Optional<Outfit> outfit) {
+	public static void receive(UUID player, Optional<Outfit> outfit) {
 		if (outfit.isPresent() && outfit.get().isValid()) {
 			OUTFITS.put(player, outfit.get());
 		} else {
@@ -71,7 +71,8 @@ public final class ClientOutfits {
 
 	/** Whether the server has Skin Mixer: if not, outfits are only seen by this client. */
 	public static boolean serverHasMod() {
-		return ClientPlayNetworking.canSend(SetOutfitPayload.TYPE);
+		Minecraft minecraft = Minecraft.getInstance();
+		return minecraft.getConnection() != null && minecraft.getConnection().hasChannel(SetOutfitPayload.TYPE);
 	}
 
 	/**
@@ -85,7 +86,7 @@ public final class ClientOutfits {
 		}
 		LocalOutfit.save(outfit);
 		if (serverHasMod()) {
-			ClientPlayNetworking.send(new SetOutfitPayload(Optional.ofNullable(outfit)));
+			ClientPacketDistributor.sendToServer(new SetOutfitPayload(Optional.ofNullable(outfit)));
 		} else {
 			receive(minecraft.player.getUUID(), Optional.ofNullable(outfit));
 		}

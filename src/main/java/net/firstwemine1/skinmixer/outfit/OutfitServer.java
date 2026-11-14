@@ -8,12 +8,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.mojang.brigadier.CommandDispatcher;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.firstwemine1.skinmixer.client.ClientOutfits;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -38,28 +42,37 @@ public final class OutfitServer {
 	private OutfitServer() {
 	}
 
-	public static void register() {
-		PayloadTypeRegistry.playC2S().register(SetOutfitPayload.TYPE, SetOutfitPayload.CODEC);
-		PayloadTypeRegistry.playS2C().register(OutfitPayload.TYPE, OutfitPayload.CODEC);
-		ServerPlayNetworking.registerGlobalReceiver(SetOutfitPayload.TYPE,
-				(payload, context) -> requestChange(context.player(), payload.outfit()));
-		ServerLifecycleEvents.SERVER_STARTED.register(server -> store = OutfitStore.load(server.getWorldPath(LevelResource.ROOT)));
-		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+	public static void register(IEventBus modBus) {
+		// Optional: either side may lack the mod. Handlers run on the main thread.
+		modBus.addListener((RegisterPayloadHandlersEvent event) -> event.registrar("1").optional()
+				.playToServer(SetOutfitPayload.TYPE, SetOutfitPayload.CODEC,
+						(payload, context) -> requestChange((ServerPlayer) context.player(), payload.outfit()))
+				.playToClient(OutfitPayload.TYPE, OutfitPayload.CODEC,
+						(payload, context) -> ClientOutfits.receive(payload.player(), payload.outfit())));
+		NeoForge.EVENT_BUS.addListener((ServerStartedEvent event) -> store = OutfitStore.load(event.getServer().getWorldPath(LevelResource.ROOT)));
+		NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> {
 			store = null;
 			LAST_CHANGE.clear();
 			PENDING.clear();
 		});
-		ServerTickEvents.END_SERVER_TICK.register(OutfitServer::tick);
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> onJoin(handler.player, server));
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-			// A change still waiting is applied anyway: the player pressed Apply before leaving.
-			Optional<Outfit> waiting = PENDING.remove(handler.player.getUUID());
-			if (waiting != null) {
-				setOutfit(server, handler.player.getUUID(), waiting.orElse(null));
+		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post event) -> tick(event.getServer()));
+		NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
+			if (event.getEntity() instanceof ServerPlayer player) {
+				onJoin(player, player.level().getServer());
 			}
-			LAST_CHANGE.remove(handler.player.getUUID());
 		});
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> registerCommands(dispatcher));
+		NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> {
+			if (!(event.getEntity() instanceof ServerPlayer player)) {
+				return;
+			}
+			// A change still waiting is applied anyway: the player pressed Apply before leaving.
+			Optional<Outfit> waiting = PENDING.remove(player.getUUID());
+			if (waiting != null) {
+				setOutfit(player.level().getServer(), player.getUUID(), waiting.orElse(null));
+			}
+			LAST_CHANGE.remove(player.getUUID());
+		});
+		NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> registerCommands(event.getDispatcher()));
 	}
 
 	/** A client pressed Apply. */
@@ -132,8 +145,8 @@ public final class OutfitServer {
 	}
 
 	private static void sendTo(ServerPlayer viewer, UUID player, Optional<Outfit> outfit) {
-		if (ServerPlayNetworking.canSend(viewer, OutfitPayload.TYPE)) {
-			ServerPlayNetworking.send(viewer, new OutfitPayload(player, outfit));
+		if (viewer.connection.hasChannel(OutfitPayload.TYPE)) {
+			PacketDistributor.sendToPlayer(viewer, new OutfitPayload(player, outfit));
 		}
 	}
 

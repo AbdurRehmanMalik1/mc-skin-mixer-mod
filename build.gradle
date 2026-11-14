@@ -1,92 +1,140 @@
 plugins {
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+    id 'java-library'
+    id 'eclipse'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.141'
 }
 
-loom {
-	splitEnvironmentSourceSets()
-
-	mods {
-		"skinmixer" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
-
-	// Multiplayer testing on one PC: runServer uses run/, each client gets its own folder and name,
-	// so a server and two clients can run at once and see each other's outfits.
-	runs {
-		client {
-			runDir "run/client1"
-			programArgs "--username", "Player1"
-		}
-		client2 {
-			client()
-			source sourceSets.client
-			name "Minecraft Client 2"
-			runDir "run/client2"
-			programArgs "--username", "Player2"
-		}
-	}
+tasks.named('wrapper', Wrapper).configure {
+    distributionType = Wrapper.DistributionType.BIN
 }
 
-fabricApi {
-	// In-game check: ./gradlew runClientGameTest opens a world and a dedicated server, drives the menu,
-	// checks the baked skin pixel by pixel, and screenshots into build/run/clientGameTest/screenshots.
-	// Source in src/gametest. Opens a game window, so it isn't part of ./gradlew build.
-	configureTests {
-		createSourceSet = true
-		modId = "skinmixer-test"
-		enableGameTests = false
-		eula = true
-	}
+version = "${minecraft_version}-${mod_version}"
+group = mod_group
+
+base {
+    archivesName = mod_id
 }
 
-// The client test needs the client classes.
-afterEvaluate {
-	sourceSets.gametest.compileClasspath += sourceSets.client.compileClasspath + sourceSets.client.output
-	sourceSets.gametest.runtimeClasspath += sourceSets.client.runtimeClasspath + sourceSets.client.output
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+
+neoForge {
+    version = project.neo_version
+
+    runs {
+        // Multiplayer testing on one PC: runServer uses run/, each client gets its own folder and name,
+        // so a server and two clients can run at once and see each other's outfits.
+        client {
+            client()
+            gameDirectory = project.file('run/client1')
+            programArguments.addAll '--username', 'Player1'
+        }
+
+        client2 {
+            client()
+            gameDirectory = project.file('run/client2')
+            programArguments.addAll '--username', 'Player2'
+        }
+
+        server {
+            server()
+            programArgument '--nogui'
+        }
+
+        configureEach {
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-
-	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
 
-processResources {
-	def version = project.version
-	inputs.property "version", version
+def generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+    def replaceProperties = [
+            mod_id                 : mod_id,
+            version                : version,
+            mod_version            : mod_version,
+            mod_name               : mod_name,
+            mod_description        : mod_description,
+            mod_license            : mod_license,
+            author_name            : author_name,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from 'src/main/templates'
+    into layout.buildDirectory.dir('generated/sources/modMetadata')
+}
 
-	filesMatching("fabric.mod.json") {
-		expand "version": version
-	}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+tasks.named('jar', Jar) {
+    from(rootProject.file('LICENSE'))
+    manifest {
+        attributes([
+                "Specification-Title"   : mod_name,
+                "Specification-Vendor"  : author_name,
+                "Specification-Version" : mod_version,
+                "Implementation-Title"  : mod_name,
+                "Implementation-Vendor" : author_name,
+                "Implementation-Version": mod_version,
+        ])
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+    options.encoding = 'UTF-8'
 }
 
-java {
-	withSourcesJar()
-
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+// Scripted client check: ./gradlew runClientE2E. It opens a game window for about a minute, drives the
+// menu, checks the baked skin pixel by pixel and screenshots into build/run/clientE2E/screenshots; it
+// exits with status 1 if a check fails. The test lives in its own source set (src/e2e), joins the mod
+// only in dev runs, and never goes into the mod jar.
+sourceSets {
+    e2e {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
 }
 
-jar {
-	def projectName = project.name
-	inputs.property "projectName", projectName
+neoForge {
+    addModdingDependenciesTo(sourceSets.e2e)
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.e2e)
+        }
+    }
+    runs {
+        clientE2E {
+            client()
+            sourceSet = sourceSets.e2e
+            gameDirectory = project.file('build/run/clientE2E')
+            programArguments.addAll '--username', 'Player1'
+            systemProperty 'skinmixer.clientE2E', 'true'
+        }
+    }
+}
 
-	from("LICENSE") {
-		rename { "${it}_$projectName"}
-	}
+tasks.matching { it.name == 'runClientE2E' }.configureEach {
+    def options = file('build/run/clientE2E/options.txt')
+    doFirst {
+        // Quiet, no first-launch screens, and a window in the background doesn't pause the game.
+        options.parentFile.mkdirs()
+        options.text = "onboardAccessibility:false\npauseOnLostFocus:false\nsoundCategory_master:0.0\ntutorialStep:none\nskipMultiplayerWarning:true\n"
+    }
 }
