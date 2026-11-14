@@ -11,7 +11,6 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.commands.CommandSourceStack;
@@ -39,10 +38,10 @@ public final class OutfitServer {
 	}
 
 	public static void register() {
-		PayloadTypeRegistry.playC2S().register(SetOutfitPayload.TYPE, SetOutfitPayload.CODEC);
-		PayloadTypeRegistry.playS2C().register(OutfitPayload.TYPE, OutfitPayload.CODEC);
-		ServerPlayNetworking.registerGlobalReceiver(SetOutfitPayload.TYPE,
-				(payload, context) -> requestChange(context.player(), payload.outfit()));
+		ServerPlayNetworking.registerGlobalReceiver(OutfitNetwork.SET_OUTFIT, (server, player, handler, buf, sender) -> {
+			Optional<Outfit> outfit = OutfitNetwork.readOptional(buf);
+			server.execute(() -> requestChange(player, outfit));
+		});
 		ServerLifecycleEvents.SERVER_STARTED.register(server -> store = OutfitStore.load(server.getWorldPath(LevelResource.ROOT)));
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
 			store = null;
@@ -132,8 +131,8 @@ public final class OutfitServer {
 	}
 
 	private static void sendTo(ServerPlayer viewer, UUID player, Optional<Outfit> outfit) {
-		if (ServerPlayNetworking.canSend(viewer, OutfitPayload.TYPE)) {
-			ServerPlayNetworking.send(viewer, new OutfitPayload(player, outfit));
+		if (ServerPlayNetworking.canSend(viewer, OutfitNetwork.OUTFIT)) {
+			ServerPlayNetworking.send(viewer, OutfitNetwork.OUTFIT, OutfitNetwork.outfit(player, outfit));
 		}
 	}
 

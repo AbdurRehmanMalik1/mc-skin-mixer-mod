@@ -9,9 +9,6 @@ import java.util.regex.Pattern;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.firstwemine1.skinmixer.skin.Part;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 
 /**
  * What a player wears: the arm model, and which skin each of the six parts comes from.
@@ -44,17 +41,10 @@ public record Outfit(boolean slim, List<String> parts) {
 		SOURCES = List.copyOf(sources);
 	}
 
-	private static final int MAX_ID_LENGTH = 64;
-
 	public static final Codec<Outfit> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 			Codec.BOOL.fieldOf("slim").forGetter(Outfit::slim),
 			Codec.STRING.listOf().fieldOf("parts").forGetter(Outfit::parts)
 	).apply(instance, Outfit::new));
-
-	public static final StreamCodec<RegistryFriendlyByteBuf, Outfit> STREAM_CODEC = StreamCodec.composite(
-			ByteBufCodecs.BOOL, Outfit::slim,
-			ByteBufCodecs.stringUtf8(MAX_ID_LENGTH).apply(ByteBufCodecs.list(Part.values().length)), Outfit::parts,
-			Outfit::new);
 
 	public Outfit {
 		parts = List.copyOf(parts);

@@ -24,7 +24,6 @@ import net.minecraft.client.renderer.texture.HttpTexture;
 import net.firstwemine1.skinmixer.client.mixin.HttpTextureAccessor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.client.resources.PlayerSkin;
 
 /**
  * Turns outfits into ordinary 64×64 skin textures. The game then draws the baked texture exactly as it
@@ -46,15 +45,12 @@ public final class SkinBaker {
 
 	/** The default skin {@code name}'s texture, in the wide or slim version. */
 	public static ResourceLocation defaultTexture(String name, boolean slim) {
-		return ResourceLocation.withDefaultNamespace("textures/entity/player/" + (slim ? "slim/" : "wide/") + name + ".png");
+		return new ResourceLocation("textures/entity/player/" + (slim ? "slim/" : "wide/") + name + ".png");
 	}
 
 	/** A {@link PlayerSkin} drawing {@code texture}, keeping the cape and elytra of {@code base}. */
 	public static PlayerSkin skinOf(ResourceLocation texture, boolean slim, PlayerSkin base) {
-		PlayerSkin.Model model = slim ? PlayerSkin.Model.SLIM : PlayerSkin.Model.WIDE;
-		return base == null
-				? new PlayerSkin(texture, null, null, null, model, false)
-				: new PlayerSkin(texture, null, base.capeTexture(), base.elytraTexture(), model, base.secure());
+		return new PlayerSkin(texture, slim ? PlayerSkin.Model.SLIM : PlayerSkin.Model.WIDE);
 	}
 
 	/** Same outfit on the same real skin, same key, so they share one baked texture. */

@@ -25,7 +25,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.client.resources.PlayerSkin;
+import net.firstwemine1.skinmixer.client.PlayerSkin;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -114,7 +114,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 				new Outfit(false, Arrays.asList("self", "noor", "noor", "noor", "noor", "noor"))));
 		wait("own head outfit", () -> "self".equals(firstPart()));
 		pause(5);
-		run("own head is baked", () -> check(isBaked(client.player.getSkin()), "own head outfit is baked"));
+		run("own head is baked", () -> check(isBaked(drawnSkin()), "own head outfit is baked"));
 		screenshot("worn-own-head");
 
 		run("look up Notch", () -> {
@@ -153,14 +153,14 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		run("back to the real skin", () -> ClientOutfits.choose(null));
 		wait("the real skin", () -> ClientOutfits.get(self()) == null);
 		pause(5);
-		run("real skin restored", () -> check(!isBaked(client.player.getSkin()), "reset restores the real skin"));
+		run("real skin restored", () -> check(!isBaked(drawnSkin()), "reset restores the real skin"));
 	}
 
 	// ---- checks ----
 
 	/** The player's drawn skin is baked, with each part's pixels from the right default skin. */
 	private void checkBaked(boolean slim) {
-		PlayerSkin skin = client.player.getSkin();
+		PlayerSkin skin = drawnSkin();
 		check(isBaked(skin), "mix is baked");
 		check((skin.model() == PlayerSkin.Model.SLIM) == slim, "arm model is " + (slim ? "slim" : "wide"));
 		AbstractTexture texture = client.getTextureManager().getTexture(skin.texture());
@@ -179,7 +179,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 
 	private void checkRemoteHead(UUID player) {
 		PlayerSkin fetched = RemoteSkins.get(player);
-		PlayerSkin skin = client.player.getSkin();
+		PlayerSkin skin = drawnSkin();
 		if (fetched == null || !isBaked(skin)) {
 			fail("added skin's head isn't worn");
 			return;
@@ -191,6 +191,11 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 			return;
 		}
 		check(source[10 * 64 + 10] == dynamic.getPixels().getPixelRGBA(10, 10), "added skin's face is worn");
+	}
+
+	/** The skin the game draws for the local player. */
+	private PlayerSkin drawnSkin() {
+		return new PlayerSkin(client.player.getSkinTextureLocation(), PlayerSkin.Model.byName(client.player.getModelName()));
 	}
 
 	private static boolean isBaked(PlayerSkin skin) {

@@ -15,14 +15,15 @@ import net.minecraft.world.level.WorldDataConfiguration;
 import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 
-/** The calls {@link SkinMixerClientE2E} makes that differ between Minecraft versions (this is 1.21.1). */
+/** The calls {@link SkinMixerClientE2E} makes that differ between Minecraft versions (this is 1.20.1). */
 final class Versioned {
 	private Versioned() {
 	}
 
 	/** Creates and opens a fresh creative flat-ish world from the title screen. */
 	static boolean openWorld(Minecraft client) {
-		if (!(client.screen instanceof TitleScreen)) {
+		// Not before the resources have finished loading, or block updates hit an empty model manager.
+		if (!(client.screen instanceof TitleScreen) || client.getOverlay() != null) {
 			return false;
 		}
 		GameRules rules = new GameRules();
@@ -31,7 +32,7 @@ final class Versioned {
 		LevelSettings settings = new LevelSettings("skinmixerE2E" + System.currentTimeMillis(), GameType.CREATIVE, false,
 				Difficulty.PEACEFUL, true, rules, WorldDataConfiguration.DEFAULT);
 		client.createWorldOpenFlows().createFreshLevel(settings.levelName(), settings, new WorldOptions(1, false, false),
-				WorldPresets::createNormalWorldDimensions, client.screen);
+				WorldPresets::createNormalWorldDimensions);
 		return true;
 	}
 

@@ -85,7 +85,7 @@ public final class SkinLibrary {
 	private static void save() {
 		Path file = file();
 		try {
-			JsonElement json = CODEC.encodeStart(JsonOps.INSTANCE, ENTRIES).getOrThrow();
+			JsonElement json = CODEC.encodeStart(JsonOps.INSTANCE, ENTRIES).getOrThrow(false, error -> { });
 			Files.createDirectories(file.getParent());
 			Files.writeString(file, new GsonBuilder().setPrettyPrinting().create().toJson(json));
 		} catch (IOException | RuntimeException e) {

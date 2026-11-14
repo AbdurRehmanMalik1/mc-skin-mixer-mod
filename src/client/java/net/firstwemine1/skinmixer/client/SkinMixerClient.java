@@ -2,7 +2,11 @@ package net.firstwemine1.skinmixer.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.firstwemine1.skinmixer.SkinMixer;
-import net.firstwemine1.skinmixer.outfit.OutfitPayload;
+import java.util.Optional;
+import java.util.UUID;
+
+import net.firstwemine1.skinmixer.outfit.Outfit;
+import net.firstwemine1.skinmixer.outfit.OutfitNetwork;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -14,7 +18,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.firstwemine1.skinmixer.client.gui.SkinMixerScreen;
-import net.minecraft.client.gui.screens.options.SkinCustomizationScreen;
+import net.minecraft.client.gui.screens.SkinCustomizationScreen;
 import net.minecraft.network.chat.Component;
 
 /** Client entrypoint: the menu key, the menu button in Skin Customization, and outfit updates from the server. */
@@ -28,8 +32,11 @@ public final class SkinMixerClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		KeyBindingHelper.registerKeyBinding(OPEN_MENU);
 
-		ClientPlayNetworking.registerGlobalReceiver(OutfitPayload.TYPE,
-				(payload, context) -> ClientOutfits.receive(payload.player(), payload.outfit()));
+		ClientPlayNetworking.registerGlobalReceiver(OutfitNetwork.OUTFIT, (client, handler, buf, sender) -> {
+			UUID player = buf.readUUID();
+			Optional<Outfit> outfit = OutfitNetwork.readOptional(buf);
+			client.execute(() -> ClientOutfits.receive(player, outfit));
+		});
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
 			if (!ClientOutfits.serverHasMod() && client.player != null) {
 				ClientOutfits.joinedWithoutServerMod(client.player.getUUID());

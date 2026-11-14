@@ -62,7 +62,7 @@ public final class OutfitStore {
 
 	private void save() {
 		try {
-			JsonElement json = CODEC.encodeStart(JsonOps.INSTANCE, outfits).getOrThrow();
+			JsonElement json = CODEC.encodeStart(JsonOps.INSTANCE, outfits).getOrThrow(false, error -> { });
 			Files.createDirectories(file.getParent());
 			Files.writeString(file, GSON.toJson(json));
 		} catch (IOException | RuntimeException e) {

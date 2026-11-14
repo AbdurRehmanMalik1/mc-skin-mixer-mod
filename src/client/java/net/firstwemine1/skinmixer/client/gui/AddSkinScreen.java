@@ -7,7 +7,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.StringUtil;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -48,12 +47,12 @@ public final class AddSkinScreen extends Screen {
 	}
 
 	private void updateButtons() {
-		add.active = !looking && StringUtil.isValidPlayerName(name.getValue().trim()) && !name.getValue().isBlank();
+		add.active = !looking && isValidName(name.getValue().trim()) && !name.getValue().isBlank();
 	}
 
 	private void lookUp() {
 		String wanted = name.getValue().trim();
-		if (looking || !StringUtil.isValidPlayerName(wanted) || wanted.isEmpty()) {
+		if (looking || !isValidName(wanted) || wanted.isEmpty()) {
 			return;
 		}
 		looking = true;
@@ -85,6 +84,7 @@ public final class AddSkinScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+		renderBackground(graphics);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		graphics.drawCenteredString(font, title, width / 2, height / 2 - 70, WHITE);
 		graphics.drawCenteredString(font, Component.translatable("skinmixer.add.help"), width / 2, height / 2 - 52, GREY);
@@ -94,5 +94,10 @@ public final class AddSkinScreen extends Screen {
 	@Override
 	public void onClose() {
 		minecraft.setScreen(parent);
+	}
+
+	/** A possible Minecraft username: 1 to 16 letters, digits and underscores. */
+	private static boolean isValidName(String name) {
+		return name.matches("[A-Za-z0-9_]{1,16}");
 	}
 }

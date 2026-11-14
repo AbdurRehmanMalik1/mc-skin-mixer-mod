@@ -46,7 +46,7 @@ final class LocalOutfit {
 				Files.deleteIfExists(file);
 				return;
 			}
-			JsonElement json = Outfit.CODEC.encodeStart(JsonOps.INSTANCE, outfit).getOrThrow();
+			JsonElement json = Outfit.CODEC.encodeStart(JsonOps.INSTANCE, outfit).getOrThrow(false, error -> { });
 			Files.createDirectories(file.getParent());
 			Files.writeString(file, new GsonBuilder().setPrettyPrinting().create().toJson(json));
 		} catch (IOException | RuntimeException e) {

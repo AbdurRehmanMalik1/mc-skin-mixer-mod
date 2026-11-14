@@ -1,31 +1,34 @@
 package net.firstwemine1.skinmixer.client.mixin;
 
-import com.mojang.authlib.GameProfile;
 import net.firstwemine1.skinmixer.client.ClientOutfits;
+import net.firstwemine1.skinmixer.client.PlayerSkin;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Every place the client draws a player's skin asks {@code PlayerInfo.getSkin()}: the player model
- * ({@code AbstractClientPlayer.getSkin()} delegates here), the first-person hand and the tab list.
- * Swapping the answer here dresses the player everywhere at once.
+ * Every place the client draws a player's skin asks {@code PlayerInfo} for it: the player model and the
+ * first-person hand (through {@code AbstractClientPlayer}), and the tab list. On this version the
+ * texture and the arm model are asked for separately, so both answers are swapped.
  */
 @Mixin(PlayerInfo.class)
 abstract class PlayerInfoMixin {
-	@Shadow
-	public abstract GameProfile getProfile();
+	@Inject(method = "getSkinLocation", at = @At("RETURN"), cancellable = true)
+	private void skinmixer$wearOutfit(CallbackInfoReturnable<ResourceLocation> cir) {
+		PlayerSkin dressed = ClientOutfits.dressed((PlayerInfo) (Object) this);
+		if (dressed != null) {
+			cir.setReturnValue(dressed.texture());
+		}
+	}
 
-	@Inject(method = "getSkin", at = @At("RETURN"), cancellable = true)
-	private void skinmixer$wearOutfit(CallbackInfoReturnable<PlayerSkin> cir) {
-		PlayerSkin original = cir.getReturnValue();
-		PlayerSkin dressed = ClientOutfits.apply(getProfile().getId(), original);
-		if (dressed != original) {
-			cir.setReturnValue(dressed);
+	@Inject(method = "getModelName", at = @At("RETURN"), cancellable = true)
+	private void skinmixer$wearOutfitModel(CallbackInfoReturnable<String> cir) {
+		PlayerSkin dressed = ClientOutfits.dressed((PlayerInfo) (Object) this);
+		if (dressed != null) {
+			cir.setReturnValue(dressed.model().id());
 		}
 	}
 }

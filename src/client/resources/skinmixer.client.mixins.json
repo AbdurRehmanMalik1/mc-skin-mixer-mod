@@ -4,9 +4,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"HttpTextureAccessor",
-		"PlayerInfoAccessor",
-		"PlayerInfoMixin",
-		"PlayerSkinWidgetAccessor"
+		"PlayerInfoMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

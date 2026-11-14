@@ -2,30 +2,44 @@ package net.firstwemine1.skinmixer.client.gui;
 
 import java.util.function.Supplier;
 
-import net.firstwemine1.skinmixer.client.mixin.PlayerSkinWidgetAccessor;
+import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.firstwemine1.skinmixer.client.PlayerSkin;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.PlayerSkinWidget;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.model.geom.EntityModelSet;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
- * Vanilla's rotatable 3D preview, with a camera that glides in on the part being edited: the head
- * fills the view while choosing a head, the legs while choosing legs.
+ * A rotatable 3D preview of the outfit, with a camera that glides in on the part being edited: the head
+ * fills the view while choosing a head, the legs while choosing legs. Drag to turn it.
  *
- * <p>Vanilla draws the model centred in the widget. Zooming scales that drawing about the widget's
- * centre, shifts it so the focused part sits in the middle, and clips it to the widget.
+ * <p>This version has no skin preview widget, so this draws the player model itself, the way newer
+ * versions' preview does: centred, {@code height / 2.125} pixels per model unit. Zooming scales that
+ * about the widget's centre, shifts it so the focused part sits in the middle, and clips it.
  */
-public final class OutfitPreview extends PlayerSkinWidget {
-	/** From vanilla's preview: the model is drawn {@code height / 2.125} pixels per model unit. */
+public final class OutfitPreview extends AbstractWidget {
 	private static final float MODEL_HEIGHT = 2.125f;
-	/** Skin pixels per model unit, and the middle of the model, in skin pixels from the top of the head. */
 	private static final float PIXELS_PER_UNIT = 16;
 	private static final float MODEL_MIDDLE = 16;
-	/** How quickly the camera settles: about 63% of the way every this many milliseconds. */
 	private static final float EASE_MILLIS = 90;
+	private static final float ROTATION_SENSITIVITY = 2.5f;
+	private static final float ROTATION_X_LIMIT = 50;
 
+	private final PlayerModel<LivingEntity> wideModel;
+	private final PlayerModel<LivingEntity> slimModel;
+	private final Supplier<PlayerSkin> skin;
+	private float rotationX = -5;
+	private float rotationY = 30;
 	private float zoom = 1;
 	private float focus = MODEL_MIDDLE;
 	private float targetZoom = 1;
@@ -35,7 +49,13 @@ public final class OutfitPreview extends PlayerSkinWidget {
 	private long lastFrame = -1;
 
 	public OutfitPreview(int width, int height, EntityModelSet models, Supplier<PlayerSkin> skin) {
-		super(width, height, models, skin);
+		super(0, 0, width, height, CommonComponents.EMPTY);
+		this.wideModel = new PlayerModel<>(models.bakeLayer(ModelLayers.PLAYER), false);
+		this.slimModel = new PlayerModel<>(models.bakeLayer(ModelLayers.PLAYER_SLIM), true);
+		// Grown-up proportions; models start out as babies.
+		this.wideModel.young = false;
+		this.slimModel.young = false;
+		this.skin = skin;
 	}
 
 	/** Frames the part being edited: zooms in on it and turns it towards the viewer. */
@@ -47,13 +67,14 @@ public final class OutfitPreview extends PlayerSkinWidget {
 		if (instantly) {
 			zoom = targetZoom;
 			focus = targetFocus;
-			((PlayerSkinWidgetAccessor) (Object) this).skinmixer$setRotationY(targetTurn);
+			rotationY = targetTurn;
 		}
 	}
 
 	@Override
 	protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
-		super.onDrag(mouseX, mouseY, dragX, dragY);
+		rotationX = Mth.clamp(rotationX - (float) dragY * ROTATION_SENSITIVITY, -ROTATION_X_LIMIT, ROTATION_X_LIMIT);
+		rotationY += (float) dragX * ROTATION_SENSITIVITY;
 		// The player turned it by hand: leave it where they put it until the next part is framed.
 		autoTurn = false;
 	}
@@ -66,25 +87,49 @@ public final class OutfitPreview extends PlayerSkinWidget {
 			zoom += (targetZoom - zoom) * step;
 			focus += (targetFocus - focus) * step;
 			if (autoTurn) {
-				PlayerSkinWidgetAccessor turning = (PlayerSkinWidgetAccessor) (Object) this;
 				// The short way round, however far it was dragged before.
-				float current = turning.skinmixer$rotationY();
-				turning.skinmixer$setRotationY(current + Mth.wrapDegrees(targetTurn - current) * step);
+				rotationY += Mth.wrapDegrees(targetTurn - rotationY) * step;
 			}
 		}
 		lastFrame = now;
 
+		PlayerSkin current = skin.get();
+		PlayerModel<LivingEntity> model = current.model() == PlayerSkin.Model.SLIM ? slimModel : wideModel;
 		float centreX = getX() + getWidth() / 2f;
 		float centreY = getY() + getHeight() / 2f;
-		float pixel = getHeight() / MODEL_HEIGHT / PIXELS_PER_UNIT;
-		graphics.enableScissor(getX(), getY(), getRight(), getBottom());
-		graphics.pose().pushPose();
-		graphics.pose().translate(centreX, centreY - (focus - MODEL_MIDDLE) * pixel * zoom, 0);
-		// Depth isn't scaled, so a zoomed-in model can't poke through the GUI's near and far planes.
-		graphics.pose().scale(zoom, zoom, 1);
-		graphics.pose().translate(-centreX, -centreY, 0);
-		super.renderWidget(graphics, mouseX, mouseY, partialTick);
-		graphics.pose().popPose();
+		float scale = getHeight() / MODEL_HEIGHT;
+		float pixel = scale / PIXELS_PER_UNIT;
+
+		graphics.enableScissor(getX(), getY(), getX() + getWidth(), getY() + getHeight());
+		PoseStack pose = graphics.pose();
+		pose.pushPose();
+		// The zoom: scale about the centre, shifted so the focused part lands there.
+		pose.translate(centreX, centreY - (focus - MODEL_MIDDLE) * pixel * zoom, 100);
+		pose.scale(zoom, zoom, 1);
+		// Vanilla's preview transform from here on: feet at the bottom of the box, middle in the middle.
+		pose.translate(0, getHeight() / 2f, 0);
+		pose.scale(scale, scale, -scale);
+		pose.translate(0, -0.0625f, 0);
+		pose.rotateAround(Axis.XP.rotationDegrees(rotationX), 0, -1.0625f, 0);
+		// Without newer versions' z flip, turning goes the other way round: negated so positive still turns
+		// the player's right side forward, as on every version.
+		pose.mulPose(Axis.YP.rotationDegrees(-rotationY));
+		graphics.flush();
+		Lighting.setupForEntityInInventory();
+
+		pose.pushPose();
+		// As the inventory draws a player on this version: no extra z flip (newer GUIs need one).
+		pose.translate(0, -1.501f, 0);
+		model.renderToBuffer(pose, graphics.bufferSource().getBuffer(model.renderType(current.texture())),
+				LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
+		pose.popPose();
+		graphics.flush();
+		Lighting.setupFor3DItems();
+		pose.popPose();
 		graphics.disableScissor();
+	}
+
+	@Override
+	protected void updateWidgetNarration(NarrationElementOutput output) {
 	}
 }

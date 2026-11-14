@@ -24,7 +24,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.client.resources.PlayerSkin;
+import net.firstwemine1.skinmixer.client.PlayerSkin;
 
 /**
  * The mixer, laid out like a character creator:
@@ -194,13 +194,13 @@ public final class SkinMixerScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
 		if (overGrid(mouseX, mouseY) && scrollY != 0) {
 			scrollRow -= (int) Math.signum(scrollY);
 			layoutCards();
 			return true;
 		}
-		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+		return super.mouseScrolled(mouseX, mouseY, scrollY);
 	}
 
 	/** Back from the add-skin screen with a new skin: show the end of the grid, where it went. */
@@ -342,6 +342,8 @@ public final class SkinMixerScreen extends Screen {
 		hovered = under;
 		updatePreview();
 
+		renderBackground(graphics);
+		graphics.fill(preview.getX(), preview.getY(), preview.getX() + preview.getWidth(), preview.getY() + preview.getHeight(), PANEL);
 		super.render(graphics, mouseX, mouseY, partialTick);
 		graphics.drawCenteredString(font, Component.translatable("skinmixer.screen.title_with", title, category.title()), width / 2, 8, WHITE);
 		Component status = Component.translatable(ClientOutfits.serverHasMod()
@@ -357,13 +359,7 @@ public final class SkinMixerScreen extends Screen {
 			graphics.fill(barX, thumbY, barX + 3, thumbY + thumbHeight, GREY);
 		}
 		graphics.drawCenteredString(font, Component.translatable("skinmixer.screen.preview.hint"),
-				preview.getX() + preview.getWidth() / 2, preview.getBottom() - 11, GREY);
-	}
-
-	@Override
-	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-		super.renderBackground(graphics, mouseX, mouseY, partialTick);
-		graphics.fill(preview.getX(), preview.getY(), preview.getRight(), preview.getBottom(), PANEL);
+				preview.getX() + preview.getWidth() / 2, (preview.getY() + preview.getHeight()) - 11, GREY);
 	}
 
 	@Override
@@ -404,7 +400,7 @@ public final class SkinMixerScreen extends Screen {
 
 		@Override
 		protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-			graphics.fill(getX(), getY(), getRight(), getBottom(), PANEL);
+			graphics.fill(getX(), getY(), (getX() + getWidth()), (getY() + getHeight()), PANEL);
 			PartArt.drawDoll(graphics, shownTexture(), shownSlim(), dollX(), dollY(), scale);
 			Part under = isHovered() ? partAt(mouseX, mouseY) : null;
 			for (Part part : Part.values()) {
@@ -450,9 +446,9 @@ public final class SkinMixerScreen extends Screen {
 		@Override
 		protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 			boolean selected = tab == category;
-			graphics.fill(getX(), getY(), getRight(), getBottom(), selected ? TAB_SELECTED : isHoveredOrFocused() ? CARD_HOVER : CARD);
+			graphics.fill(getX(), getY(), (getX() + getWidth()), (getY() + getHeight()), selected ? TAB_SELECTED : isHoveredOrFocused() ? CARD_HOVER : CARD);
 			if (selected) {
-				graphics.fill(getX(), getBottom() - 2, getRight(), getBottom(), YELLOW);
+				graphics.fill(getX(), (getY() + getHeight()) - 2, (getX() + getWidth()), (getY() + getHeight()), YELLOW);
 			}
 			PartArt.drawItem(graphics, shownTexture(), shownSlim(), tab.parts(Side.BOTH), getX() + 3, getY() + 2, getWidth() - 6, getHeight() - 6);
 		}
@@ -503,7 +499,7 @@ public final class SkinMixerScreen extends Screen {
 		protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
 			int x = getX();
 			int y = getY();
-			graphics.fill(x, y, getRight(), getBottom(), isHoveredOrFocused() ? CARD_HOVER : CARD);
+			graphics.fill(x, y, (getX() + getWidth()), (getY() + getHeight()), isHoveredOrFocused() ? CARD_HOVER : CARD);
 			ResourceLocation texture = sourceTexture(source);
 			if (texture != null) {
 				PartArt.drawItem(graphics, texture, sourceSlim(source), targets(), x + 3, y + 3, getWidth() - 6, getHeight() - 6);
@@ -548,7 +544,7 @@ public final class SkinMixerScreen extends Screen {
 			int x = getX();
 			int y = getY();
 			int colour = isHoveredOrFocused() ? WHITE : GREY;
-			graphics.fill(x, y, getRight(), getBottom(), isHoveredOrFocused() ? CARD_HOVER : CARD);
+			graphics.fill(x, y, (getX() + getWidth()), (getY() + getHeight()), isHoveredOrFocused() ? CARD_HOVER : CARD);
 			graphics.renderOutline(x, y, getWidth(), getHeight(), colour);
 			int cx = x + getWidth() / 2;
 			int cy = y + getHeight() / 2;

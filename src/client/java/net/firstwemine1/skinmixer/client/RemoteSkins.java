@@ -5,18 +5,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.mojang.authlib.Agent;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.ProfileLookupCallback;
-import com.mojang.authlib.yggdrasil.ProfileResult;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import net.firstwemine1.skinmixer.SkinMixer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.Util;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.DefaultPlayerSkin;
 
 /**
  * Any Minecraft player's current skin, fetched from Mojang by account id, the way vanilla fetches the
@@ -30,7 +30,6 @@ public final class RemoteSkins {
 	private static final class Entry {
 		State state = State.LOADING;
 		PlayerSkin skin;
-		String name;
 	}
 
 	private static final Map<UUID, Entry> ENTRIES = new HashMap<>();
@@ -85,7 +84,6 @@ public final class RemoteSkins {
 						Entry entry = new Entry();
 						entry.state = State.READY;
 						entry.skin = f.skin();
-						entry.name = f.name();
 						ENTRIES.put(f.id(), entry);
 						version++;
 					});
@@ -93,31 +91,54 @@ public final class RemoteSkins {
 				}, minecraft);
 	}
 
+	/**
+	 * The profile's skin, once it's downloaded to vanilla's skin cache (the mixer reads it from there). A
+	 * player who never set a skin wears their default one.
+	 */
 	private static CompletableFuture<Optional<PlayerSkin>> skinOf(Optional<GameProfile> profile) {
 		if (profile.isEmpty()) {
 			return CompletableFuture.completedFuture(Optional.empty());
 		}
-		return Minecraft.getInstance().getSkinManager().getOrLoad(profile.get()).thenApply(Optional::of);
+		GameProfile found = profile.get();
+		CompletableFuture<Optional<PlayerSkin>> result = new CompletableFuture<>();
+		Minecraft minecraft = Minecraft.getInstance();
+		minecraft.execute(() -> {
+			Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> textures = minecraft.getSkinManager().getInsecureSkinInformation(found);
+			MinecraftProfileTexture skin = textures.get(MinecraftProfileTexture.Type.SKIN);
+			if (skin == null) {
+				result.complete(Optional.of(new PlayerSkin(DefaultPlayerSkin.getDefaultSkin(found.getId()),
+						PlayerSkin.Model.byName(DefaultPlayerSkin.getSkinModelName(found.getId())))));
+				return;
+			}
+			PlayerSkin.Model model = PlayerSkin.Model.byName(skin.getMetadata("model"));
+			// The callback runs once the file is downloaded (or at once if it's cached already).
+			minecraft.getSkinManager().registerSkins(found, (type, location, texture) -> {
+				if (type == MinecraftProfileTexture.Type.SKIN) {
+					result.complete(Optional.of(new PlayerSkin(location, model)));
+				}
+			}, false);
+		});
+		return result;
 	}
 
 	/** The full profile, with the skin in it, from Mojang's session server. Blocking. */
 	private static Optional<GameProfile> fetchById(UUID player) {
-		ProfileResult result = Minecraft.getInstance().getMinecraftSessionService().fetchProfile(player, false);
-		return Optional.ofNullable(result).map(ProfileResult::profile);
+		GameProfile filled = Minecraft.getInstance().getMinecraftSessionService().fillProfileProperties(new GameProfile(player, null), false);
+		return filled == null || filled.getProperties().isEmpty() ? Optional.empty() : Optional.of(filled);
 	}
 
 	/** A player's account id from their name, from Mojang's profile API. Blocking. */
 	private static Optional<UUID> fetchIdByName(String name) {
 		GameProfileRepository repository = new YggdrasilAuthenticationService(Minecraft.getInstance().getProxy()).createProfileRepository();
 		AtomicReference<UUID> found = new AtomicReference<>();
-		repository.findProfilesByNames(new String[] {name}, new ProfileLookupCallback() {
+		repository.findProfilesByNames(new String[] {name}, Agent.MINECRAFT, new ProfileLookupCallback() {
 			@Override
 			public void onProfileLookupSucceeded(GameProfile profile) {
 				found.set(profile.getId());
 			}
 
 			@Override
-			public void onProfileLookupFailed(String profileName, Exception exception) {
+			public void onProfileLookupFailed(GameProfile profile, Exception exception) {
 			}
 		});
 		return Optional.ofNullable(found.get());
