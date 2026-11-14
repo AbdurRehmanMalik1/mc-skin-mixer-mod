@@ -53,14 +53,26 @@ Forge, one branch per Minecraft version (`forge/<version>`), with the same featu
 On Forge the mod is optional on either side too: clients without it can join a server with it, and
 the other way round.
 
-## Testing
+NeoForge, one branch per Minecraft version (`neoforge/<version>`), with the same features:
+
+| Minecraft | Branch | NeoForge | Java |
+|---|---|---|---|
+| 26.3 | `neoforge/26.3` | 26.3.0.22-beta | 25 |
+| 26.2 | `neoforge/26.2` | 26.2.0.59 | 25 |
+| 26.1.2 | `neoforge/26.1.2` | 26.1.2.68-beta | 25 |
+| 1.21.11 | `neoforge/1.21.11` | 21.11.42 | 21 |
+| 1.21.4 | `neoforge/1.21.4` | 21.4.158 | 21 |
+| 1.21.1 | `neoforge/1.21.1` | 21.1.238 | 21 |
+
+All nine default skins on every NeoForge version, and the mod is optional on either side.
+
+## Testing (NeoForge)
 
 | Command | What it does |
 |---|---|
-| `./gradlew build` | Compiles and runs the unit tests (slicing and arm resizing). |
-| `./gradlew runClientGameTest` | Opens a game window and drives the mod by itself: menu, clicks, pixel checks of the baked skin, a dedicated server and reconnecting. Screenshots go to `build/run/clientGameTest/screenshots`. |
-| `./gradlew runClient` | Play it yourself (Player1). |
-| `./gradlew runServer`, then `runClient` and `runClient2` | A server and two players on one PC, to see each other's outfits. Connect both to `localhost`. The first `runServer` stops at the EULA: set `eula=true` in `run/eula.txt` and `online-mode=false` in `run/server.properties` (dev clients aren't logged in), then start it again. |
+| `./gradlew build` | Builds the mod jar (`build/libs/skinmixer-<mc>-<version>.jar`) and runs the unit tests. |
+| `./gradlew runClientE2E` | Opens a game window and drives the mod by itself: menu, clicks, pixel checks of the baked skin, a skin added by username. Exits with status 1 if a check fails. Screenshots go to `build/run/clientE2E/screenshots`. |
+| `./gradlew runServer`, then `runClient` and `runClient2` | A server and two players on one PC (Player1, Player2), to see each other's outfits. Connect both to `localhost`. Set `eula=true` in `run/eula.txt` and `online-mode=false` in `run/server.properties`. |
 
 ## How it works
 
