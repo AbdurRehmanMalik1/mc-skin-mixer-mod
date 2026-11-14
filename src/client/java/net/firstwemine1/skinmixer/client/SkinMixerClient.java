@@ -20,6 +20,7 @@ import net.minecraft.client.gui.components.Button;
 import net.firstwemine1.skinmixer.client.gui.SkinMixerScreen;
 import net.minecraft.client.gui.screens.SkinCustomizationScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 
 /** Client entrypoint: the menu key, the menu button in Skin Customization, and outfit updates from the server. */
 public final class SkinMixerClient implements ClientModInitializer {
@@ -48,7 +49,7 @@ public final class SkinMixerClient implements ClientModInitializer {
 
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (screen instanceof SkinCustomizationScreen && client.player != null) {
-				Screens.getButtons(screen).add(new Button(6, 6, 100, 20, Component.translatable("skinmixer.screen.open"),
+				Screens.getButtons(screen).add(new Button(6, 6, 100, 20, new TranslatableComponent("skinmixer.screen.open"),
 						b -> client.setScreen(new SkinMixerScreen(screen))));
 			}
 		});

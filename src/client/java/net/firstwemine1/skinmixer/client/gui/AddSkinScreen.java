@@ -7,6 +7,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.TextComponent;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -21,12 +23,12 @@ public final class AddSkinScreen extends Screen {
 	private final SkinMixerScreen parent;
 	private EditBox name;
 	private Button add;
-	private Component status = Component.empty();
+	private Component status = TextComponent.EMPTY;
 	private int statusColour = GREY;
 	private boolean looking;
 
 	public AddSkinScreen(SkinMixerScreen parent) {
-		super(Component.translatable("skinmixer.add.title"));
+		super(new TranslatableComponent("skinmixer.add.title"));
 		this.parent = parent;
 	}
 
@@ -34,11 +36,11 @@ public final class AddSkinScreen extends Screen {
 	protected void init() {
 		int x = width / 2 - 100;
 		int y = height / 2 - 30;
-		name = addRenderableWidget(new EditBox(font, x, y, 200, 20, Component.translatable("skinmixer.add.name")));
+		name = addRenderableWidget(new EditBox(font, x, y, 200, 20, new TranslatableComponent("skinmixer.add.name")));
 		name.setMaxLength(16);
 		name.setResponder(text -> updateButtons());
-		add = addRenderableWidget(button(Component.translatable("skinmixer.add.button"), b -> lookUp(), x, y + 44, 98, 20));
-		addRenderableWidget(button(Component.translatable("gui.cancel"), b -> onClose(), x + 102, y + 44, 98, 20));
+		add = addRenderableWidget(button(new TranslatableComponent("skinmixer.add.button"), b -> lookUp(), x, y + 44, 98, 20));
+		addRenderableWidget(button(new TranslatableComponent("gui.cancel"), b -> onClose(), x + 102, y + 44, 98, 20));
 		setInitialFocus(name);
 		updateButtons();
 	}
@@ -53,7 +55,7 @@ public final class AddSkinScreen extends Screen {
 			return;
 		}
 		looking = true;
-		status = Component.translatable("skinmixer.add.looking", wanted);
+		status = new TranslatableComponent("skinmixer.add.looking", wanted);
 		statusColour = GREY;
 		updateButtons();
 		RemoteSkins.lookUp(wanted).thenAccept(found -> {
@@ -63,7 +65,7 @@ public final class AddSkinScreen extends Screen {
 				parent.skinAdded();
 				minecraft.setScreen(parent);
 			} else {
-				status = Component.translatable("skinmixer.add.not_found", wanted);
+				status = new TranslatableComponent("skinmixer.add.not_found", wanted);
 				statusColour = RED;
 				updateButtons();
 			}
@@ -86,7 +88,7 @@ public final class AddSkinScreen extends Screen {
 		super.render(poseStack, mouseX, mouseY, partialTick);
 		renderTooltips(poseStack, mouseX, mouseY);
 		graphics.drawCenteredString(font, title, width / 2, height / 2 - 70, WHITE);
-		graphics.drawCenteredString(font, Component.translatable("skinmixer.add.help"), width / 2, height / 2 - 52, GREY);
+		graphics.drawCenteredString(font, new TranslatableComponent("skinmixer.add.help"), width / 2, height / 2 - 52, GREY);
 		graphics.drawCenteredString(font, status, width / 2, height / 2 - 2, statusColour);
 	}
 

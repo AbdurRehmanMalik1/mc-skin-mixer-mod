@@ -1,5 +1,6 @@
 package net.firstwemine1.skinmixer.client.gui;
 
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -70,11 +71,15 @@ public final class GuiGraphics {
 		GuiComponent.blit(pose, x, y, width, height, u, v, uWidth, vHeight, textureWidth, textureHeight);
 	}
 
+	/** Clips to a rectangle in GUI coordinates; this version only clips in window pixels, from the bottom. */
 	public void enableScissor(int x0, int y0, int x1, int y1) {
-		GuiComponent.enableScissor(x0, y0, x1, y1);
+		Window window = Minecraft.getInstance().getWindow();
+		double scale = window.getGuiScale();
+		RenderSystem.enableScissor((int) (x0 * scale), (int) (window.getHeight() - y1 * scale),
+				Math.max(0, (int) ((x1 - x0) * scale)), Math.max(0, (int) ((y1 - y0) * scale)));
 	}
 
 	public void disableScissor() {
-		GuiComponent.disableScissor();
+		RenderSystem.disableScissor();
 	}
 }

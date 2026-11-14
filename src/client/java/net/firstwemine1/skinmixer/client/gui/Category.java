@@ -4,6 +4,7 @@ import java.util.List;
 
 import net.firstwemine1.skinmixer.skin.Part;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 
 /**
  * What the menu is editing: the whole outfit, or one region of the body. Like the categories of a
@@ -42,7 +43,7 @@ public enum Category {
 	}
 
 	public Component title() {
-		return Component.translatable("skinmixer.category." + key);
+		return new TranslatableComponent("skinmixer.category." + key);
 	}
 
 	/** Height on the model the camera centres on, in skin pixels from the top of the head (feet at 32). */
@@ -82,7 +83,7 @@ public enum Category {
 		BOTH, RIGHT, LEFT;
 
 		public Component title() {
-			return Component.translatable("skinmixer.side." + name().toLowerCase(java.util.Locale.ROOT));
+			return new TranslatableComponent("skinmixer.side." + name().toLowerCase(java.util.Locale.ROOT));
 		}
 
 		public Side next() {

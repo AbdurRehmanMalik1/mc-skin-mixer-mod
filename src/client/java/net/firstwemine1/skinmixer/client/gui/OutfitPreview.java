@@ -14,7 +14,7 @@ import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -48,7 +48,7 @@ public final class OutfitPreview extends AbstractWidget {
 	private long lastFrame = -1;
 
 	public OutfitPreview(int width, int height, EntityModelSet models, Supplier<PlayerSkin> skin) {
-		super(0, 0, width, height, CommonComponents.EMPTY);
+		super(0, 0, width, height, TextComponent.EMPTY);
 		this.wideModel = new PlayerModel<>(models.bakeLayer(ModelLayers.PLAYER), false);
 		this.slimModel = new PlayerModel<>(models.bakeLayer(ModelLayers.PLAYER_SLIM), true);
 		// Grown-up proportions; models start out as babies.

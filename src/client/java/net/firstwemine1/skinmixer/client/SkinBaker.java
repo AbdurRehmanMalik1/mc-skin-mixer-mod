@@ -162,9 +162,9 @@ public final class SkinBaker {
 		if (cached != null) {
 			return cached;
 		}
-		Optional<Resource> resource = minecraft.getResourceManager().getResource(path);
-		if (resource.isPresent()) {
-			try (InputStream in = resource.get().open(); NativeImage image = NativeImage.read(in)) {
+		if (minecraft.getResourceManager().hasResource(path)) {
+			try (Resource resource = minecraft.getResourceManager().getResource(path);
+					InputStream in = resource.getInputStream(); NativeImage image = NativeImage.read(in)) {
 				int[] pixels = toPixels(image);
 				if (pixels != null) {
 					RESOURCE_PIXELS.put(path, pixels);

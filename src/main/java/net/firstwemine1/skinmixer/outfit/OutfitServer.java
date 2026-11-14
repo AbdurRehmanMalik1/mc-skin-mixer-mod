@@ -8,7 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.mojang.brigadier.CommandDispatcher;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -17,6 +17,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -58,7 +59,7 @@ public final class OutfitServer {
 			}
 			LAST_CHANGE.remove(handler.player.getUUID());
 		});
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> registerCommands(dispatcher));
+		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> registerCommands(dispatcher));
 	}
 
 	/** A client pressed Apply. */
@@ -143,7 +144,7 @@ public final class OutfitServer {
 						.executes(context -> {
 							ServerPlayer player = context.getSource().getPlayerOrException();
 							setOutfit(context.getSource().getServer(), player.getUUID(), null);
-							context.getSource().sendSuccess(Component.literal("Your outfit was reset to your own skin."), false);
+							context.getSource().sendSuccess(new TextComponent("Your outfit was reset to your own skin."), false);
 							return 1;
 						})
 						.then(Commands.argument("players", EntityArgument.players())
@@ -153,7 +154,7 @@ public final class OutfitServer {
 									for (ServerPlayer player : players) {
 										setOutfit(context.getSource().getServer(), player.getUUID(), null);
 									}
-									context.getSource().sendSuccess(Component.literal("Reset the outfit of " + players.size() + " player(s)."), true);
+									context.getSource().sendSuccess(new TextComponent("Reset the outfit of " + players.size() + " player(s)."), true);
 									return players.size();
 								}))));
 	}
