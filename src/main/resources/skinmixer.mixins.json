@@ -1,7 +1,9 @@
 {
 	"required": true,
+	"minVersion": "0.8",
 	"package": "net.firstwemine1.skinmixer.client.mixin",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_17",
+	"refmap": "skinmixer.refmap.json",
 	"client": [
 		"HttpTextureAccessor",
 		"PlayerInfoMixin"

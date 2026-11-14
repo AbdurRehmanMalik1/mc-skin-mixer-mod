@@ -1,13 +1,23 @@
 package net.firstwemine1.skinmixer;
 
-import net.fabricmc.api.ModInitializer;
+import net.firstwemine1.skinmixer.client.SkinMixerClient;
+import net.firstwemine1.skinmixer.outfit.OutfitNetwork;
 import net.firstwemine1.skinmixer.outfit.OutfitServer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.IExtensionPoint;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.network.NetworkConstants;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Common entrypoint: runs on dedicated servers and on clients (for the single player server). */
-public final class SkinMixer implements ModInitializer {
+/** Mod entry: runs on dedicated servers and on clients (for the single player server too). */
+@Mod(SkinMixer.MOD_ID)
+public final class SkinMixer {
 	public static final String MOD_ID = "skinmixer";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
@@ -15,8 +25,13 @@ public final class SkinMixer implements ModInitializer {
 		return new ResourceLocation(MOD_ID, path);
 	}
 
-	@Override
-	public void onInitialize() {
+	public SkinMixer() {
+		IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
+		OutfitNetwork.register();
 		OutfitServer.register();
+		// Optional on either side: clients without it can join a server with it, and the other way round.
+		ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class,
+				() -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (remote, isServer) -> true));
+		DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> SkinMixerClient.init(modBus));
 	}
 }
