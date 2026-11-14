@@ -2,7 +2,6 @@ package net.firstwemine1.skinmixer.e2e;
 
 import java.util.List;
 
-import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -38,7 +37,13 @@ final class Versioned {
 	}
 
 	static List<AbstractWidget> widgets(Minecraft client) {
-		return Screens.getButtons(client.screen);
+		List<AbstractWidget> widgets = new java.util.ArrayList<>();
+		for (net.minecraft.client.gui.components.events.GuiEventListener child : client.screen.children()) {
+			if (child instanceof AbstractWidget) {
+				widgets.add((AbstractWidget) child);
+			}
+		}
+		return widgets;
 	}
 
 	static void screenshot(Minecraft client, String name) {

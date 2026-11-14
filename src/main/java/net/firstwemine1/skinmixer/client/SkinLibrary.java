@@ -14,7 +14,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.firstwemine1.skinmixer.SkinMixer;
-import net.fabricmc.loader.api.FabricLoader;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 /**
  * The skins this player added to the mixer by username, kept in {@code config/skinmixer-library.json}.
@@ -61,7 +61,7 @@ public final class SkinLibrary {
 	}
 
 	private static Path file() {
-		return FabricLoader.getInstance().getConfigDir().resolve(SkinMixer.MOD_ID + "-library.json");
+		return FMLPaths.CONFIGDIR.get().resolve(SkinMixer.MOD_ID + "-library.json");
 	}
 
 	private static void load() {

@@ -9,8 +9,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
 
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.firstwemine1.skinmixer.SkinMixer;
 import net.firstwemine1.skinmixer.client.ClientOutfits;
 import net.firstwemine1.skinmixer.client.RemoteSkins;
@@ -33,7 +31,7 @@ import net.minecraft.resources.ResourceLocation;
  * menu with clicks, checks the baked skin pixel by pixel, adds a skin by username, and screenshots to
  * build/run/clientE2E/screenshots. Run with ./gradlew runClientE2E; exits with status 1 if a check fails.
  */
-public class SkinMixerClientE2E implements ClientModInitializer {
+public class SkinMixerClientE2E {
 	private static final int STEP_TIMEOUT = 600;
 	private static final List<String> MIX = Arrays.asList("alex", "steve", "alex", "alex", "steve", "steve");
 
@@ -54,16 +52,14 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		}
 	}
 
-	@Override
-	public void onInitializeClient() {
-		if (!Boolean.getBoolean("skinmixer.clientE2E")) {
-			return;
-		}
+	public SkinMixerClientE2E() {
 		script();
-		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
-			client = mc;
-			tick();
-		});
+	}
+
+	/** Once per client tick, at the end of the tick. */
+	public void tick(Minecraft mc) {
+		client = mc;
+		tick();
 	}
 
 	private void script() {
