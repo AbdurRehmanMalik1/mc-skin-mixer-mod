@@ -10,7 +10,7 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import net.firstwemine1.skinmixer.SkinMixer;
 import net.firstwemine1.skinmixer.outfit.Outfit;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.loading.FMLPaths;
 
 /**
  * The last outfit this player chose, in {@code config/skinmixer-outfit.json}. Worn on servers without the
@@ -21,7 +21,7 @@ final class LocalOutfit {
 	}
 
 	private static Path file() {
-		return FabricLoader.getInstance().getConfigDir().resolve(SkinMixer.MOD_ID + "-outfit.json");
+		return FMLPaths.CONFIGDIR.get().resolve(SkinMixer.MOD_ID + "-outfit.json");
 	}
 
 	static Outfit load() {

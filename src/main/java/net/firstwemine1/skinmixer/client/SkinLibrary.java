@@ -14,7 +14,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.firstwemine1.skinmixer.SkinMixer;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.loading.FMLPaths;
 import net.minecraft.core.UUIDUtil;
 
 /**
@@ -62,7 +62,7 @@ public final class SkinLibrary {
 	}
 
 	private static Path file() {
-		return FabricLoader.getInstance().getConfigDir().resolve(SkinMixer.MOD_ID + "-library.json");
+		return FMLPaths.CONFIGDIR.get().resolve(SkinMixer.MOD_ID + "-library.json");
 	}
 
 	private static void load() {

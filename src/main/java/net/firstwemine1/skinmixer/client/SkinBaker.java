@@ -151,7 +151,7 @@ public final class SkinBaker {
 	 * A skin texture's pixels. Downloaded skins live only in the texture manager (vanilla keeps their pixels
 	 * after upload); default skins and resource-pack skins are read from the resources.
 	 */
-	private static int[] texturePixels(ResourceLocation path) {
+	public static int[] texturePixels(ResourceLocation path) {
 		Minecraft minecraft = Minecraft.getInstance();
 		int[] cached = RESOURCE_PIXELS.get(path);
 		if (cached != null) {
