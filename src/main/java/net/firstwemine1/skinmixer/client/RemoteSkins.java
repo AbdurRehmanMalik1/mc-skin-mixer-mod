@@ -64,7 +64,51 @@ public final class RemoteSkins {
 	}
 
 	/** A found player: their account id, their name as Mojang spells it, and their skin. */
-	public record Found(UUID id, String name, PlayerSkin skin) {
+	public static final class Found {
+		private final UUID id;
+		private final String name;
+		private final PlayerSkin skin;
+
+		public Found(UUID id, String name, PlayerSkin skin) {
+			this.id = id;
+			this.name = name;
+			this.skin = skin;
+		}
+
+		public UUID id() {
+			return id;
+		}
+
+		public String name() {
+			return name;
+		}
+
+		public PlayerSkin skin() {
+			return skin;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (!(o instanceof Found)) {
+				return false;
+			}
+			Found other = (Found) o;
+			return java.util.Objects.equals(id, other.id) && java.util.Objects.equals(name, other.name) && java.util.Objects.equals(skin, other.skin);
+		}
+
+		@Override
+		public int hashCode() {
+			return java.util.Objects.hash(id, name, skin);
+		}
+
+		@Override
+		public String toString() {
+			return "Found[" + "id=" + id + ", " + "name=" + name + ", " + "skin=" + skin + "]";
+		}
+
 	}
 
 	/**
@@ -96,7 +140,7 @@ public final class RemoteSkins {
 	 * player who never set a skin wears their default one.
 	 */
 	private static CompletableFuture<Optional<PlayerSkin>> skinOf(Optional<GameProfile> profile) {
-		if (profile.isEmpty()) {
+		if (!profile.isPresent()) {
 			return CompletableFuture.completedFuture(Optional.empty());
 		}
 		GameProfile found = profile.get();

@@ -2,17 +2,12 @@ package net.firstwemine1.skinmixer.client.gui;
 
 import java.util.function.Supplier;
 
-import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Vector3f;
 import net.firstwemine1.skinmixer.client.PlayerSkin;
 import net.minecraft.Util;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.model.PlayerModel;
-import net.minecraft.client.model.geom.EntityModelSet;
-import net.minecraft.client.model.geom.ModelLayers;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.util.Mth;
@@ -28,6 +23,8 @@ import net.minecraft.world.entity.LivingEntity;
  */
 public final class OutfitPreview extends AbstractWidget {
 	private static final float MODEL_HEIGHT = 2.125f;
+	/** Full sky and block light, packed. */
+	private static final int FULL_BRIGHT = 15728880;
 	private static final float PIXELS_PER_UNIT = 16;
 	private static final float MODEL_MIDDLE = 16;
 	private static final float EASE_MILLIS = 90;
@@ -47,10 +44,10 @@ public final class OutfitPreview extends AbstractWidget {
 	private boolean autoTurn;
 	private long lastFrame = -1;
 
-	public OutfitPreview(int width, int height, EntityModelSet models, Supplier<PlayerSkin> skin) {
+	public OutfitPreview(int width, int height, Supplier<PlayerSkin> skin) {
 		super(0, 0, width, height, TextComponent.EMPTY);
-		this.wideModel = new PlayerModel<>(models.bakeLayer(ModelLayers.PLAYER), false);
-		this.slimModel = new PlayerModel<>(models.bakeLayer(ModelLayers.PLAYER_SLIM), true);
+		this.wideModel = new PlayerModel<>(0, false);
+		this.slimModel = new PlayerModel<>(0, true);
 		// Grown-up proportions; models start out as babies.
 		this.wideModel.young = false;
 		this.slimModel.young = false;
@@ -117,21 +114,16 @@ public final class OutfitPreview extends AbstractWidget {
 		// the player's right side forward, as on every version.
 		pose.mulPose(Vector3f.YP.rotationDegrees(-rotationY));
 		graphics.flush();
-		Lighting.setupForEntityInInventory();
 
 		pose.pushPose();
 		// As the inventory draws a player on this version: no extra z flip (newer GUIs need one).
 		pose.translate(0, -1.501f, 0);
 		model.renderToBuffer(pose, graphics.bufferSource().getBuffer(model.renderType(current.texture())),
-				LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
+				FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
 		pose.popPose();
 		graphics.flush();
-		Lighting.setupFor3DItems();
 		pose.popPose();
 		graphics.disableScissor();
 	}
 
-	@Override
-	public void updateNarration(NarrationElementOutput output) {
-	}
 }

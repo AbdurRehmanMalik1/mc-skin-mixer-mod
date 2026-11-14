@@ -18,7 +18,6 @@ import net.firstwemine1.skinmixer.skin.Part;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
@@ -117,14 +116,14 @@ public final class SkinMixerScreen extends Screen {
 
 		// Left: body map, arm model, which side.
 		dollPanelHeight = PartArt.DOLL_HEIGHT * dollScale + 10;
-		addRenderableWidget(new BodyMap(sideColumnX, TOP, sideColumnWidth, dollPanelHeight, dollScale));
+		addButton(new BodyMap(sideColumnX, TOP, sideColumnWidth, dollPanelHeight, dollScale));
 		int y = TOP + dollPanelHeight + 4;
-		armsButton = addRenderableWidget(button(TextComponent.EMPTY, b -> {
+		armsButton = addButton(button(TextComponent.EMPTY, b -> {
 			outfit = outfit.withSlim(!outfit.slim());
 			refresh();
 		}, sideColumnX, y, sideColumnWidth, 20));
 		tooltip(armsButton, new TranslatableComponent("skinmixer.screen.arms.tooltip"));
-		sideButton = addRenderableWidget(button(TextComponent.EMPTY, b -> {
+		sideButton = addButton(button(TextComponent.EMPTY, b -> {
 			side = side.next();
 			preview.frame(category, side, false);
 			refresh();
@@ -132,31 +131,31 @@ public final class SkinMixerScreen extends Screen {
 		tooltip(sideButton, new TranslatableComponent("skinmixer.screen.side.tooltip"));
 
 		// Middle: the zooming 3D preview.
-		preview = addRenderableWidget(new OutfitPreview(PREVIEW_WIDTH, previewHeight, minecraft.getEntityModels(), () -> previewSkin));
+		preview = addButton(new OutfitPreview(PREVIEW_WIDTH, previewHeight, () -> previewSkin));
 		place(preview, previewX, TOP);
 		preview.frame(category, side, true);
 
 		// Right: category tabs and the choices.
 		for (Category tab : Category.values()) {
-			addRenderableWidget(new CategoryTab(gridX + tab.ordinal() * (TAB_WIDTH + 2), TOP, tab));
+			addButton(new CategoryTab(gridX + tab.ordinal() * (TAB_WIDTH + 2), TOP, tab));
 		}
 		for (String source : sources()) {
-			cards.add(addRenderableWidget(new ChoiceCard(source)));
+			cards.add(addButton(new ChoiceCard(source)));
 		}
-		cards.add(addRenderableWidget(new AddCard()));
+		cards.add(addButton(new AddCard()));
 		visibleRows = Math.max(1, (height - 42 - gridY) / (CARD_HEIGHT + CARD_GAP));
 		layoutCards();
 
 		int buttonWidth = 90;
 		int buttonsX = width / 2 - (4 * buttonWidth + 3 * 4) / 2;
 		int buttonsY = height - 26;
-		addRenderableWidget(button(new TranslatableComponent("skinmixer.screen.randomize"), b -> randomize(), buttonsX, buttonsY, buttonWidth, 20));
-		addRenderableWidget(button(new TranslatableComponent("skinmixer.screen.reset"), b -> {
+		addButton(button(new TranslatableComponent("skinmixer.screen.randomize"), b -> randomize(), buttonsX, buttonsY, buttonWidth, 20));
+		addButton(button(new TranslatableComponent("skinmixer.screen.reset"), b -> {
 			outfit = Outfit.ofSelf(selfSlim);
 			refresh();
 		}, buttonsX + (buttonWidth + 4), buttonsY, buttonWidth, 20));
-		addRenderableWidget(button(new TranslatableComponent("gui.cancel"), b -> onClose(), buttonsX + 2 * (buttonWidth + 4), buttonsY, buttonWidth, 20));
-		addRenderableWidget(button(new TranslatableComponent("skinmixer.screen.apply"), b -> apply(), buttonsX + 3 * (buttonWidth + 4), buttonsY, buttonWidth, 20));
+		addButton(button(new TranslatableComponent("gui.cancel"), b -> onClose(), buttonsX + 2 * (buttonWidth + 4), buttonsY, buttonWidth, 20));
+		addButton(button(new TranslatableComponent("skinmixer.screen.apply"), b -> apply(), buttonsX + 3 * (buttonWidth + 4), buttonsY, buttonWidth, 20));
 
 		refresh();
 	}
@@ -253,7 +252,7 @@ public final class SkinMixerScreen extends Screen {
 				skins.add(Outfit.mojangSource(entry.id()));
 			}
 		}
-		for (Category region : List.of(Category.HEAD, Category.BODY, Category.ARMS, Category.LEGS)) {
+		for (Category region : java.util.Arrays.asList(Category.HEAD, Category.BODY, Category.ARMS, Category.LEGS)) {
 			String source = skins.get(random.nextInt(skins.size()));
 			for (Part part : region.parts(Side.BOTH)) {
 				outfit = outfit.with(part, source);
@@ -335,8 +334,8 @@ public final class SkinMixerScreen extends Screen {
 		// Try on whatever choice is under the cursor.
 		String under = null;
 		for (AbstractButton card : cards) {
-			if (card instanceof ChoiceCard choice && choice.visible && choice.isMouseOver(mouseX, mouseY)) {
-				under = choice.source;
+			if (card instanceof ChoiceCard && card.visible && card.isMouseOver(mouseX, mouseY)) {
+				under = ((ChoiceCard) card).source;
 			}
 		}
 		hovered = under;
@@ -424,10 +423,6 @@ public final class SkinMixerScreen extends Screen {
 			}
 		}
 
-		@Override
-		public void updateNarration(NarrationElementOutput output) {
-			defaultButtonNarrationText(output);
-		}
 	}
 
 	/** A tab showing its region of the current outfit. */
@@ -449,17 +444,13 @@ public final class SkinMixerScreen extends Screen {
 		public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTick) {
 			GuiGraphics graphics = new GuiGraphics(poseStack);
 			boolean selected = tab == category;
-			graphics.fill(this.x, this.y, (this.x + getWidth()), (this.y + getHeight()), selected ? TAB_SELECTED : isHoveredOrFocused() ? CARD_HOVER : CARD);
+			graphics.fill(this.x, this.y, (this.x + getWidth()), (this.y + getHeight()), selected ? TAB_SELECTED : isHovered() ? CARD_HOVER : CARD);
 			if (selected) {
 				graphics.fill(this.x, (this.y + getHeight()) - 2, (this.x + getWidth()), (this.y + getHeight()), YELLOW);
 			}
 			PartArt.drawItem(graphics, shownTexture(), shownSlim(), tab.parts(Side.BOTH), this.x + 3, this.y + 2, getWidth() - 6, getHeight() - 6);
 		}
 
-		@Override
-		public void updateNarration(NarrationElementOutput output) {
-			defaultButtonNarrationText(output);
-		}
 	}
 
 	/** One choice: the part being edited, as it looks on one skin. */
@@ -482,7 +473,7 @@ public final class SkinMixerScreen extends Screen {
 
 		@Override
 		public boolean mouseClicked(double mouseX, double mouseY, int button) {
-			if (button == InputConstants.MOUSE_BUTTON_RIGHT && remote != null && active && visible && isMouseOver(mouseX, mouseY)) {
+			if (button == 1 && remote != null && active && visible && isMouseOver(mouseX, mouseY)) {
 				playDownSound(minecraft.getSoundManager());
 				SkinLibrary.remove(remote);
 				init(minecraft, width, height);
@@ -503,7 +494,7 @@ public final class SkinMixerScreen extends Screen {
 			GuiGraphics graphics = new GuiGraphics(poseStack);
 			int x = this.x;
 			int y = this.y;
-			graphics.fill(x, y, (this.x + getWidth()), (this.y + getHeight()), isHoveredOrFocused() ? CARD_HOVER : CARD);
+			graphics.fill(x, y, (this.x + getWidth()), (this.y + getHeight()), isHovered() ? CARD_HOVER : CARD);
 			ResourceLocation texture = sourceTexture(source);
 			if (texture != null) {
 				PartArt.drawItem(graphics, texture, sourceSlim(source), targets(), x + 3, y + 3, getWidth() - 6, getHeight() - 6);
@@ -514,7 +505,7 @@ public final class SkinMixerScreen extends Screen {
 			}
 			if (isWorn(source)) {
 				graphics.renderOutline(x, y, getWidth(), getHeight(), YELLOW);
-			} else if (isHoveredOrFocused()) {
+			} else if (isHovered()) {
 				graphics.renderOutline(x, y, getWidth(), getHeight(), WHITE);
 			}
 			if (Outfit.SELF.equals(source)) {
@@ -525,10 +516,6 @@ public final class SkinMixerScreen extends Screen {
 			}
 		}
 
-		@Override
-		public void updateNarration(NarrationElementOutput output) {
-			defaultButtonNarrationText(output);
-		}
 	}
 
 	/** The last card: add any Minecraft player's skin by username. */
@@ -548,8 +535,8 @@ public final class SkinMixerScreen extends Screen {
 			GuiGraphics graphics = new GuiGraphics(poseStack);
 			int x = this.x;
 			int y = this.y;
-			int colour = isHoveredOrFocused() ? WHITE : GREY;
-			graphics.fill(x, y, (this.x + getWidth()), (this.y + getHeight()), isHoveredOrFocused() ? CARD_HOVER : CARD);
+			int colour = isHovered() ? WHITE : GREY;
+			graphics.fill(x, y, (this.x + getWidth()), (this.y + getHeight()), isHovered() ? CARD_HOVER : CARD);
 			graphics.renderOutline(x, y, getWidth(), getHeight(), colour);
 			int cx = x + getWidth() / 2;
 			int cy = y + getHeight() / 2;
@@ -557,10 +544,6 @@ public final class SkinMixerScreen extends Screen {
 			graphics.fill(cx - 1, cy - 7, cx + 1, cy + 7, colour);
 		}
 
-		@Override
-		public void updateNarration(NarrationElementOutput output) {
-			defaultButtonNarrationText(output);
-		}
 	}
 
 	/** A card's name for narration and tooltips: the skin's name, or the added player's name. */

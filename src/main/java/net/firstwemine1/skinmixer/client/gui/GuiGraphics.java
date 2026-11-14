@@ -6,7 +6,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -65,9 +64,10 @@ public final class GuiGraphics {
 	/** Draws a {@code uWidth × vHeight} region of a texture stretched to {@code width × height}. */
 	public void blit(ResourceLocation texture, int x, int y, int width, int height, float u, float v, int uWidth, int vHeight,
 			int textureWidth, int textureHeight) {
-		RenderSystem.setShader(GameRenderer::getPositionTexShader);
-		RenderSystem.setShaderTexture(0, texture);
-		RenderSystem.setShaderColor(1, 1, 1, 1);
+		Minecraft.getInstance().getTextureManager().bind(texture);
+		RenderSystem.color4f(1, 1, 1, 1);
+		RenderSystem.enableBlend();
+		RenderSystem.defaultBlendFunc();
 		GuiComponent.blit(pose, x, y, width, height, u, v, uWidth, vHeight, textureWidth, textureHeight);
 	}
 

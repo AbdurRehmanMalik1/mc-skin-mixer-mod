@@ -19,11 +19,50 @@ import net.firstwemine1.skinmixer.skin.Part;
  * @param slim  whether the outfit uses slim (3 px) arms
  * @param parts one skin id per {@link Part}, in {@link Part} order
  */
-public record Outfit(boolean slim, List<String> parts) {
+public final class Outfit {
+	private final boolean slim;
+	private final List<String> parts;
+
+	public Outfit(boolean slim, List<String> parts) {
+		parts = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(parts));
+		this.slim = slim;
+		this.parts = parts;
+	}
+
+	public boolean slim() {
+		return slim;
+	}
+
+	public List<String> parts() {
+		return parts;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof Outfit)) {
+			return false;
+		}
+		Outfit other = (Outfit) o;
+		return java.util.Objects.equals(slim, other.slim) && java.util.Objects.equals(parts, other.parts);
+	}
+
+	@Override
+	public int hashCode() {
+		return java.util.Objects.hash(slim, parts);
+	}
+
+	@Override
+	public String toString() {
+		return "Outfit[" + "slim=" + slim + ", " + "parts=" + parts + "]";
+	}
+
 	/** The player's own real skin. On each client it means the wearer's skin, not the viewer's. */
 	public static final String SELF = "self";
 	/** The default skins this version of Minecraft ships: Steve (wide arms) and Alex (slim arms). */
-	public static final List<String> DEFAULT_SKINS = List.of("steve", "alex");
+	public static final List<String> DEFAULT_SKINS = java.util.Arrays.asList("steve", "alex");
 	/** The built-in skin ids: the wearer's own skin first, then the defaults. */
 	public static final List<String> SOURCES;
 	/**
@@ -37,7 +76,7 @@ public record Outfit(boolean slim, List<String> parts) {
 		List<String> sources = new ArrayList<>();
 		sources.add(SELF);
 		sources.addAll(DEFAULT_SKINS);
-		SOURCES = List.copyOf(sources);
+		SOURCES = java.util.Collections.unmodifiableList(new java.util.ArrayList<>(sources));
 	}
 
 	public static final Codec<Outfit> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -45,9 +84,6 @@ public record Outfit(boolean slim, List<String> parts) {
 			Codec.STRING.listOf().fieldOf("parts").forGetter(Outfit::parts)
 	).apply(instance, Outfit::new));
 
-	public Outfit {
-		parts = List.copyOf(parts);
-	}
 
 	/** Every part from the wearer's own skin: looks the same as wearing no outfit. */
 	public static Outfit ofSelf(boolean slim) {

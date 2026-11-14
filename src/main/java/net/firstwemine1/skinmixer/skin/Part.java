@@ -92,12 +92,17 @@ public enum Part {
 
 	/** The same part on the other side of the body, or this part for the head and body. */
 	public Part mirror() {
-		return switch (this) {
-			case RIGHT_ARM -> LEFT_ARM;
-			case LEFT_ARM -> RIGHT_ARM;
-			case RIGHT_LEG -> LEFT_LEG;
-			case LEFT_LEG -> RIGHT_LEG;
-			default -> this;
-		};
+		switch (this) {
+			case RIGHT_ARM:
+				return LEFT_ARM;
+			case LEFT_ARM:
+				return RIGHT_ARM;
+			case RIGHT_LEG:
+				return LEFT_LEG;
+			case LEFT_LEG:
+				return RIGHT_LEG;
+			default:
+				return this;
+		}
 	}
 }

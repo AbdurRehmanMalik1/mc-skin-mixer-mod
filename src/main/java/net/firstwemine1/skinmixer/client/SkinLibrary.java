@@ -22,7 +22,45 @@ import net.fabricmc.loader.api.FabricLoader;
  */
 public final class SkinLibrary {
 	/** One added skin. */
-	public record Entry(UUID id, String name) {
+	public static final class Entry {
+		private final UUID id;
+		private final String name;
+
+		public Entry(UUID id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+
+		public UUID id() {
+			return id;
+		}
+
+		public String name() {
+			return name;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (!(o instanceof Entry)) {
+				return false;
+			}
+			Entry other = (Entry) o;
+			return java.util.Objects.equals(id, other.id) && java.util.Objects.equals(name, other.name);
+		}
+
+		@Override
+		public int hashCode() {
+			return java.util.Objects.hash(id, name);
+		}
+
+		@Override
+		public String toString() {
+			return "Entry[" + "id=" + id + ", " + "name=" + name + "]";
+		}
+
 		static final Codec<Entry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 				Codec.STRING.xmap(UUID::fromString, UUID::toString).fieldOf("id").forGetter(Entry::id),
 				Codec.STRING.fieldOf("name").forGetter(Entry::name)
@@ -38,7 +76,7 @@ public final class SkinLibrary {
 
 	public static List<Entry> entries() {
 		load();
-		return List.copyOf(ENTRIES);
+		return java.util.Collections.unmodifiableList(new java.util.ArrayList<>(ENTRIES));
 	}
 
 	/** Adds a skin, or moves it to the end if it's already there. */
@@ -74,7 +112,7 @@ public final class SkinLibrary {
 			return;
 		}
 		try {
-			JsonElement json = JsonParser.parseString(Files.readString(file));
+			JsonElement json = new JsonParser().parse(new String(Files.readAllBytes(file), java.nio.charset.StandardCharsets.UTF_8));
 			CODEC.parse(JsonOps.INSTANCE, json).result().ifPresent(ENTRIES::addAll);
 		} catch (IOException | RuntimeException e) {
 			SkinMixer.LOGGER.warn("Couldn't read {}", file, e);
@@ -86,7 +124,7 @@ public final class SkinLibrary {
 		try {
 			JsonElement json = CODEC.encodeStart(JsonOps.INSTANCE, ENTRIES).getOrThrow(false, error -> { });
 			Files.createDirectories(file.getParent());
-			Files.writeString(file, new GsonBuilder().setPrettyPrinting().create().toJson(json));
+			Files.write(file, (new GsonBuilder().setPrettyPrinting().create().toJson(json)).getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		} catch (IOException | RuntimeException e) {
 			SkinMixer.LOGGER.warn("Couldn't save {}", file, e);
 		}

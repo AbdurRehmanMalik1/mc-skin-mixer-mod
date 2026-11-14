@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.KeyMapping;
+import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.firstwemine1.skinmixer.client.gui.SkinMixerScreen;
@@ -24,7 +25,7 @@ import net.minecraft.network.chat.TranslatableComponent;
 
 /** Client entrypoint: the menu key, the menu button in Skin Customization, and outfit updates from the server. */
 public final class SkinMixerClient implements ClientModInitializer {
-	public static final KeyMapping OPEN_MENU = new KeyMapping("key.skinmixer.open", InputConstants.KEY_U, "key.categories.skinmixer");
+	public static final KeyMapping OPEN_MENU = new KeyMapping("key.skinmixer.open", GLFW.GLFW_KEY_U, "key.categories.skinmixer");
 	private static final int GARBAGE_INTERVAL_TICKS = 200;
 
 	private int ticks;

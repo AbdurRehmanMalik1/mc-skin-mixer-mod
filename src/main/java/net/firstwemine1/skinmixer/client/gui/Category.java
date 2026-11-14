@@ -31,7 +31,7 @@ public enum Category {
 		this.focus = focus;
 		this.zoom = zoom;
 		this.turn = turn;
-		this.parts = List.of(parts);
+		this.parts = java.util.Arrays.asList(parts);
 	}
 
 	/** Which way the model faces while this is edited, in degrees: the edited side turned towards the viewer. */
@@ -66,16 +66,24 @@ public enum Category {
 		if (!isPaired() || side == Side.BOTH) {
 			return parts;
 		}
-		return parts.stream().filter(part -> part.isRight() == (side == Side.RIGHT)).toList();
+		return parts.stream().filter(part -> part.isRight() == (side == Side.RIGHT)).collect(java.util.stream.Collectors.toList());
 	}
 
 	public static Category of(Part part) {
-		return switch (part) {
-			case HEAD -> HEAD;
-			case BODY -> BODY;
-			case RIGHT_ARM, LEFT_ARM -> ARMS;
-			case RIGHT_LEG, LEFT_LEG -> LEGS;
-		};
+		switch (part) {
+			case HEAD:
+				return HEAD;
+			case BODY:
+				return BODY;
+			case RIGHT_ARM:
+			case LEFT_ARM:
+				return ARMS;
+			case RIGHT_LEG:
+			case LEFT_LEG:
+				return LEGS;
+			default:
+				throw new IllegalStateException();
+		}
 	}
 
 	/** Which of a pair of arms or legs the choices apply to. */

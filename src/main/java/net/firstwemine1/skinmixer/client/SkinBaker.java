@@ -107,7 +107,7 @@ public final class SkinBaker {
 
 	/** Leaving a world: every baked texture goes. Default skin pixels are kept (resource packs aside, they don't change). */
 	static void clear() {
-		retainOnly(Set.of());
+		retainOnly(java.util.Collections.emptySet());
 	}
 
 	/** Forgets cached default skins, so a resource pack that replaces them is picked up. */
@@ -176,11 +176,11 @@ public final class SkinBaker {
 			}
 		}
 		AbstractTexture texture = minecraft.getTextureManager().getTexture(path);
-		if (texture instanceof DynamicTexture dynamic && dynamic.getPixels() != null) {
-			return toPixels(dynamic.getPixels());
+		if (texture instanceof DynamicTexture && ((DynamicTexture) texture).getPixels() != null) {
+			return toPixels(((DynamicTexture) texture).getPixels());
 		}
-		if (texture instanceof HttpTexture download) {
-			return downloadedPixels(((HttpTextureAccessor) download).skinmixer$file());
+		if (texture instanceof HttpTexture) {
+			return downloadedPixels(((HttpTextureAccessor) texture).skinmixer$file());
 		}
 		return null;
 	}

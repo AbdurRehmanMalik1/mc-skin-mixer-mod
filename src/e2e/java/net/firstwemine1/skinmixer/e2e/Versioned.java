@@ -12,10 +12,11 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.DataPackConfig;
+import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.level.levelgen.WorldGenSettings;
 
-/** The calls {@link SkinMixerClientE2E} makes that differ between Minecraft versions (this is 1.18.2). */
+/** The calls {@link SkinMixerClientE2E} makes that differ between Minecraft versions (this is 1.16.5). */
 final class Versioned {
 	private Versioned() {
 	}
@@ -31,8 +32,11 @@ final class Versioned {
 		rules.getRule(GameRules.RULE_DAYLIGHT).set(false, null);
 		LevelSettings settings = new LevelSettings("skinmixerE2E" + System.currentTimeMillis(), GameType.CREATIVE, false,
 				Difficulty.PEACEFUL, true, rules, DataPackConfig.DEFAULT);
-		RegistryAccess.Writable registries = RegistryAccess.builtinCopy();
-		client.createLevel(settings.levelName(), settings, registries, WorldGenSettings.makeDefault(registries));
+		RegistryAccess.RegistryHolder registries = RegistryAccess.builtin();
+		client.createLevel(settings.levelName(), settings, registries, WorldGenSettings.makeDefault(
+				registries.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY),
+				registries.registryOrThrow(Registry.BIOME_REGISTRY),
+				registries.registryOrThrow(Registry.NOISE_GENERATOR_SETTINGS_REGISTRY)));
 		return true;
 	}
 
@@ -41,7 +45,8 @@ final class Versioned {
 	}
 
 	static void screenshot(Minecraft client, String name) {
-		Screenshot.grab(client.gameDirectory, name + ".png", client.getMainRenderTarget(), message -> {
+		Screenshot.grab(client.gameDirectory, name + ".png", client.getWindow().getWidth(), client.getWindow().getHeight(),
+				client.getMainRenderTarget(), message -> {
 		});
 	}
 }

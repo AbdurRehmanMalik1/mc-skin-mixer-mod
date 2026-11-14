@@ -16,11 +16,46 @@ public final class SkinCompositor {
 	}
 
 	/** A source skin: its pixels, and whether its arms are slim. */
-	public record SourceSkin(int[] pixels, boolean slim) {
-		public SourceSkin {
+	public static final class SourceSkin {
+		private final int[] pixels;
+		private final boolean slim;
+
+		public SourceSkin(int[] pixels, boolean slim) {
 			if (pixels.length != SIZE * SIZE) {
 				throw new IllegalArgumentException("Skin must be 64x64, got " + pixels.length + " pixels");
 			}
+			this.pixels = pixels;
+			this.slim = slim;
+		}
+
+		public int[] pixels() {
+			return pixels;
+		}
+
+		public boolean slim() {
+			return slim;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (!(o instanceof SourceSkin)) {
+				return false;
+			}
+			SourceSkin other = (SourceSkin) o;
+			return java.util.Objects.equals(pixels, other.pixels) && java.util.Objects.equals(slim, other.slim);
+		}
+
+		@Override
+		public int hashCode() {
+			return java.util.Objects.hash(pixels, slim);
+		}
+
+		@Override
+		public String toString() {
+			return "SourceSkin[" + "pixels=" + pixels + ", " + "slim=" + slim + "]";
 		}
 	}
 

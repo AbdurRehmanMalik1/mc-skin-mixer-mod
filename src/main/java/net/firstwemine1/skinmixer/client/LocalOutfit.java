@@ -30,7 +30,7 @@ final class LocalOutfit {
 			return null;
 		}
 		try {
-			JsonElement json = JsonParser.parseString(Files.readString(file));
+			JsonElement json = new JsonParser().parse(new String(Files.readAllBytes(file), java.nio.charset.StandardCharsets.UTF_8));
 			return Outfit.CODEC.parse(JsonOps.INSTANCE, json).result().filter(Outfit::isValid).orElse(null);
 		} catch (IOException | RuntimeException e) {
 			SkinMixer.LOGGER.warn("Couldn't read {}", file, e);
@@ -48,7 +48,7 @@ final class LocalOutfit {
 			}
 			JsonElement json = Outfit.CODEC.encodeStart(JsonOps.INSTANCE, outfit).getOrThrow(false, error -> { });
 			Files.createDirectories(file.getParent());
-			Files.writeString(file, new GsonBuilder().setPrettyPrinting().create().toJson(json));
+			Files.write(file, (new GsonBuilder().setPrettyPrinting().create().toJson(json)).getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		} catch (IOException | RuntimeException e) {
 			SkinMixer.LOGGER.warn("Couldn't save {}", file, e);
 		}

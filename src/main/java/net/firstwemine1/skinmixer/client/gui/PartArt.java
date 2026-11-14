@@ -25,14 +25,22 @@ public final class PartArt {
 	 */
 	public static int[] dollRect(Part part, boolean slim) {
 		int arm = part.width(slim);
-		return switch (part) {
-			case HEAD -> new int[] {4, 0, 8, 8};
-			case BODY -> new int[] {4, 8, 8, 12};
-			case RIGHT_ARM -> new int[] {4 - arm, 8, arm, 12};
-			case LEFT_ARM -> new int[] {12, 8, arm, 12};
-			case RIGHT_LEG -> new int[] {4, 20, 4, 12};
-			case LEFT_LEG -> new int[] {8, 20, 4, 12};
-		};
+		switch (part) {
+			case HEAD:
+				return new int[] {4, 0, 8, 8};
+			case BODY:
+				return new int[] {4, 8, 8, 12};
+			case RIGHT_ARM:
+				return new int[] {4 - arm, 8, arm, 12};
+			case LEFT_ARM:
+				return new int[] {12, 8, arm, 12};
+			case RIGHT_LEG:
+				return new int[] {4, 20, 4, 12};
+			case LEFT_LEG:
+				return new int[] {8, 20, 4, 12};
+			default:
+				throw new IllegalStateException();
+		}
 	}
 
 	/** One part's front face at (x, y), each skin pixel drawn {@code scale} GUI pixels wide. */

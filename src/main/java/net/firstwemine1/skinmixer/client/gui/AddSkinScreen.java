@@ -36,17 +36,17 @@ public final class AddSkinScreen extends Screen {
 	protected void init() {
 		int x = width / 2 - 100;
 		int y = height / 2 - 30;
-		name = addRenderableWidget(new EditBox(font, x, y, 200, 20, new TranslatableComponent("skinmixer.add.name")));
+		name = addButton(new EditBox(font, x, y, 200, 20, new TranslatableComponent("skinmixer.add.name")));
 		name.setMaxLength(16);
 		name.setResponder(text -> updateButtons());
-		add = addRenderableWidget(button(new TranslatableComponent("skinmixer.add.button"), b -> lookUp(), x, y + 44, 98, 20));
-		addRenderableWidget(button(new TranslatableComponent("gui.cancel"), b -> onClose(), x + 102, y + 44, 98, 20));
+		add = addButton(button(new TranslatableComponent("skinmixer.add.button"), b -> lookUp(), x, y + 44, 98, 20));
+		addButton(button(new TranslatableComponent("gui.cancel"), b -> onClose(), x + 102, y + 44, 98, 20));
 		setInitialFocus(name);
 		updateButtons();
 	}
 
 	private void updateButtons() {
-		add.active = !looking && isValidName(name.getValue().trim()) && !name.getValue().isBlank();
+		add.active = !looking && isValidName(name.getValue().trim()) && !name.getValue().trim().isEmpty();
 	}
 
 	private void lookUp() {

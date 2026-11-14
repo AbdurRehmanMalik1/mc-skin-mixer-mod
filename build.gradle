@@ -3,14 +3,7 @@ plugins {
 }
 
 loom {
-	splitEnvironmentSourceSets()
-
-	mods {
-		"skinmixer" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
+	// 1.16 can't split client and common code into source sets: everything is in main.
 
 	// Multiplayer testing on one PC: runServer uses run/, each client gets its own folder and name,
 	// so a server and two clients can run at once and see each other's outfits.
@@ -21,7 +14,6 @@ loom {
 		}
 		client2 {
 			client()
-			source sourceSets.client
 			name "Minecraft Client 2"
 			runDir "run/client2"
 			programArgs "--username", "Player2"
@@ -35,8 +27,8 @@ loom {
 // start at 1.21.4, so this version uses its own. Source in src/e2e, never in the mod jar.
 sourceSets {
 	e2e {
-		compileClasspath += main.compileClasspath + main.output + client.compileClasspath + client.output
-		runtimeClasspath += main.runtimeClasspath + main.output + client.runtimeClasspath + client.output
+		compileClasspath += main.compileClasspath + main.output
+		runtimeClasspath += main.runtimeClasspath + main.output
 	}
 }
 
@@ -94,14 +86,14 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 17
+	it.options.release = 8
 }
 
 java {
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.VERSION_1_8
+	targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 jar {

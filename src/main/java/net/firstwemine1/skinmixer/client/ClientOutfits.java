@@ -25,7 +25,57 @@ public final class ClientOutfits {
 	private static final Map<UUID, Applied> APPLIED = new HashMap<>();
 
 	/** The last skin worked out for a player, reused until their outfit or real skin changes. */
-	private record Applied(Outfit outfit, PlayerSkin original, PlayerSkin result, String key) {
+	private static final class Applied {
+		private final Outfit outfit;
+		private final PlayerSkin original;
+		private final PlayerSkin result;
+		private final String key;
+
+		public Applied(Outfit outfit, PlayerSkin original, PlayerSkin result, String key) {
+			this.outfit = outfit;
+			this.original = original;
+			this.result = result;
+			this.key = key;
+		}
+
+		public Outfit outfit() {
+			return outfit;
+		}
+
+		public PlayerSkin original() {
+			return original;
+		}
+
+		public PlayerSkin result() {
+			return result;
+		}
+
+		public String key() {
+			return key;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (!(o instanceof Applied)) {
+				return false;
+			}
+			Applied other = (Applied) o;
+			return java.util.Objects.equals(outfit, other.outfit) && java.util.Objects.equals(original, other.original) && java.util.Objects.equals(result, other.result) && java.util.Objects.equals(key, other.key);
+		}
+
+		@Override
+		public int hashCode() {
+			return java.util.Objects.hash(outfit, original, result, key);
+		}
+
+		@Override
+		public String toString() {
+			return "Applied[" + "outfit=" + outfit + ", " + "original=" + original + ", " + "result=" + result + ", " + "key=" + key + "]";
+		}
+
 	}
 
 	private ClientOutfits() {

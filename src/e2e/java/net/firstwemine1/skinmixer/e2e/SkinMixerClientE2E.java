@@ -164,7 +164,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		check(isBaked(skin), "mix is baked");
 		check((skin.model() == PlayerSkin.Model.SLIM) == slim, "arm model is " + (slim ? "slim" : "wide"));
 		AbstractTexture texture = client.getTextureManager().getTexture(skin.texture());
-		if (!(texture instanceof DynamicTexture dynamic) || dynamic.getPixels() == null) {
+		if (!(texture instanceof DynamicTexture) || ((DynamicTexture) texture).getPixels() == null) {
 			fail("baked texture has no pixels");
 			return;
 		}
@@ -172,7 +172,7 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		for (int i = 0; i < probes.length; i++) {
 			int[] source = SkinBaker.texturePixels(SkinBaker.defaultTexture(MIX.get(i), slim));
 			int expected = source[probes[i][1] * 64 + probes[i][0]];
-			int actual = dynamic.getPixels().getPixelRGBA(probes[i][0], probes[i][1]);
+			int actual = ((DynamicTexture) texture).getPixels().getPixelRGBA(probes[i][0], probes[i][1]);
 			check(expected == actual, "part " + i + " of the " + (slim ? "slim" : "wide") + " mix comes from " + MIX.get(i));
 		}
 	}
@@ -186,11 +186,11 @@ public class SkinMixerClientE2E implements ClientModInitializer {
 		}
 		int[] source = SkinBaker.texturePixels(fetched.texture());
 		AbstractTexture texture = client.getTextureManager().getTexture(skin.texture());
-		if (source == null || !(texture instanceof DynamicTexture dynamic)) {
+		if (source == null || !(texture instanceof DynamicTexture)) {
 			fail("added skin has no pixels");
 			return;
 		}
-		check(source[10 * 64 + 10] == dynamic.getPixels().getPixelRGBA(10, 10), "added skin's face is worn");
+		check(source[10 * 64 + 10] == ((DynamicTexture) texture).getPixels().getPixelRGBA(10, 10), "added skin's face is worn");
 	}
 
 	/** The skin the game draws for the local player. */

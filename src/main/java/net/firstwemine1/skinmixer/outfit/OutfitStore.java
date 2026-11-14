@@ -31,7 +31,7 @@ public final class OutfitStore {
 		OutfitStore store = new OutfitStore(worldFolder.resolve(SkinMixer.MOD_ID).resolve("outfits.json"));
 		if (Files.isRegularFile(store.file)) {
 			try {
-				JsonElement json = JsonParser.parseString(Files.readString(store.file));
+				JsonElement json = new JsonParser().parse(new String(Files.readAllBytes(store.file), java.nio.charset.StandardCharsets.UTF_8));
 				CODEC.parse(JsonOps.INSTANCE, json)
 						.resultOrPartial(error -> SkinMixer.LOGGER.warn("Skipping bad outfits in {}: {}", store.file, error))
 						.ifPresent(loaded -> loaded.forEach((id, outfit) -> {
@@ -63,7 +63,7 @@ public final class OutfitStore {
 		try {
 			JsonElement json = CODEC.encodeStart(JsonOps.INSTANCE, outfits).getOrThrow(false, error -> { });
 			Files.createDirectories(file.getParent());
-			Files.writeString(file, GSON.toJson(json));
+			Files.write(file, (GSON.toJson(json)).getBytes(java.nio.charset.StandardCharsets.UTF_8));
 		} catch (IOException | RuntimeException e) {
 			SkinMixer.LOGGER.error("Couldn't save outfits to {}", file, e);
 		}
