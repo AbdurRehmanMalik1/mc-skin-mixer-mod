@@ -41,6 +41,18 @@ Fabric only, one branch per Minecraft version (`fabric/<version>`), all with the
 Before 1.19.3 Minecraft ships only Steve (wide arms) and Alex (slim arms); arms taken from the other
 model are resized. Skins added by username work on every version.
 
+Forge, one branch per Minecraft version (`forge/<version>`), with the same features:
+
+| Minecraft | Branch | Forge | Java | Default skins |
+|---|---|---|---|---|
+| 1.20.1 | `forge/1.20.1` | 47.3.0 | 17 | 9 |
+| 1.19.2 | `forge/1.19.2` | 43.5.2 | 17 | 2 (Steve, Alex) |
+| 1.18.2 | `forge/1.18.2` | 40.3.12 | 17 | 2 (Steve, Alex) |
+| 1.16.5 | `forge/1.16.5` | 36.2.42 | 8 | 2 (Steve, Alex) |
+
+On Forge the mod is optional on either side too: clients without it can join a server with it, and
+the other way round.
+
 ## Testing
 
 | Command | What it does |
