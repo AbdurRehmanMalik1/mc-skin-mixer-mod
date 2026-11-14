@@ -25,6 +25,22 @@ Customization → Skin Mixer...*. The menu works like a character creator:
 - **Randomize**, **Reset to my skin**, **Cancel**, **Apply**.
 - Server operators: `/skinmixer reset <players>`. Anyone: `/skinmixer reset` for themselves.
 
+## Versions
+
+Fabric only, one branch per Minecraft version (`fabric/<version>`), all with the same features.
+
+| Minecraft | Branch | Java | Default skins | Automated check |
+|---|---|---|---|---|
+| 26.3, 26.2, 26.1.2 | `fabric/26.x` | 25 | 9 | `runClientGameTest` |
+| 1.21.11, 1.21.4 | `fabric/1.21.x` | 21 | 9 | `runClientGameTest` |
+| 1.21.1 | `fabric/1.21.1` | 21 | 9 | `runClientE2E` |
+| 1.20.1 | `fabric/1.20.1` | 17 | 9 | `runClientE2E` |
+| 1.19.2, 1.18.2 | `fabric/1.19.2`, `fabric/1.18.2` | 17 | 2 (Steve, Alex) | `runClientE2E` |
+| 1.16.5 | `fabric/1.16.5` | 8 | 2 (Steve, Alex) | `runClientE2E` |
+
+Before 1.19.3 Minecraft ships only Steve (wide arms) and Alex (slim arms); arms taken from the other
+model are resized. Skins added by username work on every version.
+
 ## Testing
 
 | Command | What it does |
