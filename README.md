@@ -25,19 +25,34 @@ Customization → Skin Mixer...*. The menu works like a character creator:
 - **Randomize**, **Reset to my skin**, **Cancel**, **Apply**.
 - Server operators: `/skinmixer reset <players>`. Anyone: `/skinmixer reset` for themselves.
 
+## Versions
+
+Fabric only, one branch per Minecraft version (`fabric/<version>`), all with the same features.
+
+| Minecraft | Branch | Java | Default skins | Automated check |
+|---|---|---|---|---|
+| 26.3, 26.2, 26.1.2 | `fabric/26.x` | 25 | 9 | `runClientGameTest` |
+| 1.21.11, 1.21.4 | `fabric/1.21.x` | 21 | 9 | `runClientGameTest` |
+| 1.21.1 | `fabric/1.21.1` | 21 | 9 | `runClientE2E` |
+| 1.20.1 | `fabric/1.20.1` | 17 | 9 | `runClientE2E` |
+| 1.19.2, 1.18.2 | `fabric/1.19.2`, `fabric/1.18.2` | 17 | 2 (Steve, Alex) | `runClientE2E` |
+| 1.16.5 | `fabric/1.16.5` | 8 | 2 (Steve, Alex) | `runClientE2E` |
+
+Before 1.19.3 Minecraft ships only Steve (wide arms) and Alex (slim arms); arms taken from the other
+model are resized. Skins added by username work on every version.
+
 ## Testing
 
 | Command | What it does |
 |---|---|
 | `./gradlew build` | Compiles and runs the unit tests (slicing and arm resizing). |
-| `./gradlew runClientGameTest` | Opens a game window and drives the mod by itself: menu, clicks, pixel checks of the baked skin, a dedicated server and reconnecting. Screenshots go to `build/run/clientGameTest/screenshots`. |
+| `./gradlew runClientE2E` | Opens a game window and drives the mod by itself: menu, clicks, pixel checks of the baked skin, a skin added by username. Exits with status 1 if a check fails. Screenshots go to `build/run/clientE2E/screenshots`. (Fabric's client game tests start at 1.21.4, so this version has its own.) |
 | `./gradlew runClient` | Play it yourself (Player1). |
 | `./gradlew runServer`, then `runClient` and `runClient2` | A server and two players on one PC, to see each other's outfits. Connect both to `localhost`. The first `runServer` stops at the EULA: set `eula=true` in `run/eula.txt` and `online-mode=false` in `run/server.properties` (dev clients aren't logged in), then start it again. |
 
 ## How it works
 
-- **Skins**: the nine default skins every client ships (Steve, Alex, Ari, Efe, Kai, Makena,
-  Noor, Sunny, Zuri), each in its wide and slim version, plus **My skin** (the wearer's real skin). Read
+- **Skins**: the default skins this version ships (Steve and Alex), plus **My skin** (the wearer's real skin). Read
   from the player's own game, so no Mojang art is in the jar.
 - **Added skins**: any player's skin by username. The outfit stores only the account id
   (`mojang:<uuid>`); every client that sees the outfit fetches that skin from Mojang itself.
@@ -51,7 +66,7 @@ Customization → Skin Mixer...*. The menu works like a character creator:
 
 | Limit | Detail |
 |---|---|
-| Skin sources | The nine defaults, your own, and any player's skin by username. No importing PNG files. Added skins need internet, and follow that player: if they change their skin, the outfit changes too. |
+| Skin sources | Steve, Alex, your own, and any player's skin by username. No importing PNG files. Added skins need internet, and follow that player: if they change their skin, the outfit changes too. |
 | Six parts | A part's base layer and overlay (hat, jacket, sleeves, trousers) always move together. |
 | Players without the mod | See your real skin. Showing outfits to unmodded players needs MineSkin (design doc §6.3). |
 | Per world | A server, and each single player world, keeps its own outfit per player. On a server without the mod, your last outfit is worn but only you see it. |
