@@ -9,7 +9,6 @@ import java.util.UUID;
 
 import net.firstwemine1.skinmixer.outfit.Outfit;
 import net.firstwemine1.skinmixer.outfit.OutfitNetwork;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -58,7 +57,7 @@ public final class ClientOutfits {
 	}
 
 	/** The server says what {@code player} wears now. */
-	static void receive(UUID player, Optional<Outfit> outfit) {
+	public static void receive(UUID player, Optional<Outfit> outfit) {
 		if (outfit.isPresent() && outfit.get().isValid()) {
 			OUTFITS.put(player, outfit.get());
 		} else {
@@ -69,7 +68,7 @@ public final class ClientOutfits {
 
 	/** Whether the server has Skin Mixer: if not, outfits are only seen by this client. */
 	public static boolean serverHasMod() {
-		return ClientPlayNetworking.canSend(OutfitNetwork.SET_OUTFIT);
+		return OutfitNetwork.serverHasMod();
 	}
 
 	/**
@@ -83,7 +82,7 @@ public final class ClientOutfits {
 		}
 		LocalOutfit.save(outfit);
 		if (serverHasMod()) {
-			ClientPlayNetworking.send(OutfitNetwork.SET_OUTFIT, OutfitNetwork.setOutfit(Optional.ofNullable(outfit)));
+			OutfitNetwork.sendToServer(Optional.ofNullable(outfit));
 		} else {
 			receive(minecraft.player.getUUID(), Optional.ofNullable(outfit));
 		}

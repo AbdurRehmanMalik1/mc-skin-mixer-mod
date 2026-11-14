@@ -1,114 +1,181 @@
-plugins {
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '6.0.16'
+        classpath 'org.spongepowered:mixingradle:0.7.+'
+    }
 }
 
-loom {
-	splitEnvironmentSourceSets()
+apply plugin: 'net.minecraftforge.gradle'
+// The skin hook is a mixin (Forge has no event for which skin a player wears), so the refmap is built.
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
 
-	mods {
-		"skinmixer" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
+version = "${minecraft_version}-${mod_version}"
+group = mod_group
 
-	// Multiplayer testing on one PC: runServer uses run/, each client gets its own folder and name,
-	// so a server and two clients can run at once and see each other's outfits.
-	runs {
-		client {
-			runDir "run/client1"
-			programArgs "--username", "Player1"
-		}
-		client2 {
-			client()
-			source sourceSets.client
-			name "Minecraft Client 2"
-			runDir "run/client2"
-			programArgs "--username", "Player2"
-		}
-	}
+base {
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'info'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+        }
+
+        // Multiplayer testing on one PC: runServer uses run/, each client gets its own folder and name,
+        // so a server and two clients can run at once and see each other's outfits.
+        // The username lives only on the children: a parent's args are copied into them, and a second
+        // --username makes the game exit on launch.
+        client1 {
+            parent runs.client
+            workingDirectory project.file('run/client1')
+            args '--username', 'Player1'
+        }
+
+        client2 {
+            parent runs.client
+            workingDirectory project.file('run/client2')
+            args '--username', 'Player2'
+        }
+
+        server {
+            args '--nogui'
+        }
+    }
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'Forge'
+        url = 'https://maven.minecraftforge.net/'
+    }
+    maven {
+        name = 'Minecraft libraries'
+        url = 'https://libraries.minecraft.net'
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.named('processResources', ProcessResources) {
+    def properties = [
+            mod_id: mod_id,
+            version: version,
+            mod_version: mod_version,
+            mod_name: mod_name,
+            mod_description: mod_description,
+            mod_license: mod_license,
+            author_name: author_name,
+            minecraft_min_version: minecraft_min_version,
+            minecraft_max_version: minecraft_max_version,
+            forge_min_version: forge_min_version,
+    ]
+    inputs.properties properties
+
+    filesMatching('META-INF/mods.toml') {
+        expand properties
+    }
+}
+
+tasks.named('jar', Jar) {
+    from(rootProject.file('LICENSE'))
+    manifest {
+        attributes([
+                "Specification-Title"     : mod_name,
+                "Specification-Vendor"    : author_name,
+                "Specification-Version"   : mod_version,
+                "Implementation-Title"    : mod_name,
+                "Implementation-Vendor"   : author_name,
+                "Implementation-Version"  : mod_version,
+        ])
+    }
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+sourceSets.each {
+    def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
+    it.output.resourcesDir = dir
+    it.java.destinationDirectory = dir
 }
 
 // Scripted client check: ./gradlew runClientE2E. It opens a game window for about a minute, drives the
 // menu, checks the baked skin pixel by pixel and screenshots into build/run/clientE2E/screenshots; it
-// exits with status 1 if a check fails, so it isn't part of ./gradlew build. Fabric's client game tests
-// start at 1.21.4, so this version uses its own. Source in src/e2e, never in the mod jar.
+// exits with status 1 if a check fails. The test lives in its own source set (src/e2e), joins the mod
+// only in this run, and never goes into the mod jar.
 sourceSets {
-	e2e {
-		compileClasspath += main.compileClasspath + main.output + client.compileClasspath + client.output
-		runtimeClasspath += main.runtimeClasspath + main.output + client.runtimeClasspath + client.output
-	}
+    e2e {
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+    }
 }
 
-loom {
-	mods {
-		"skinmixer-e2e" {
-			sourceSet sourceSets.e2e
-		}
-	}
-	runs {
-		clientE2E {
-			client()
-			name "Client E2E"
-			source sourceSets.e2e
-			runDir "build/run/clientE2E"
-			programArgs "--username", "Player1"
-			vmArg "-Dskinmixer.clientE2E=true"
-		}
-	}
+minecraft {
+    runs {
+        clientE2E {
+            parent runs.client
+            workingDirectory project.file('build/run/clientE2E')
+            args '--username', 'Player1'
+            property 'skinmixer.clientE2E', 'true'
+            mods {
+                skinmixer {
+                    source sourceSets.main
+                    source sourceSets.e2e
+                }
+            }
+        }
+    }
 }
 
-afterEvaluate {
-	tasks.named("runClientE2E") {
-		def options = file("build/run/clientE2E/options.txt")
-		doFirst {
-			// Quiet, no first-launch screens, and a window in the background doesn't pause the game.
-			options.parentFile.mkdirs()
-			options.text = "onboardAccessibility:false\npauseOnLostFocus:false\nsoundCategory_master:0.0\ntutorialStep:none\nskipMultiplayerWarning:true\n"
-		}
-	}
-}
-
-dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-
-	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
-}
-
-test {
-	useJUnitPlatform()
-}
-
-processResources {
-	def version = project.version
-	inputs.property "version", version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": version
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 17
-}
-
-java {
-	withSourcesJar()
-
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
-}
-
-jar {
-	def projectName = project.name
-	inputs.property "projectName", projectName
-
-	from("LICENSE") {
-		rename { "${it}_$projectName"}
-	}
+tasks.matching { it.name == 'runClientE2E' }.configureEach {
+    def options = file('build/run/clientE2E/options.txt')
+    doFirst {
+        // Quiet, no first-launch screens, and a window in the background doesn't pause the game.
+        options.parentFile.mkdirs()
+        options.text = "pauseOnLostFocus:false\nsoundCategory_master:0.0\ntutorialStep:none\nskipMultiplayerWarning:true\nonboardAccessibility:false\n"
+    }
 }

@@ -8,11 +8,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.mojang.brigadier.CommandDispatcher;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -38,31 +40,41 @@ public final class OutfitServer {
 	}
 
 	public static void register() {
-		ServerPlayNetworking.registerGlobalReceiver(OutfitNetwork.SET_OUTFIT, (server, player, handler, buf, sender) -> {
-			Optional<Outfit> outfit = OutfitNetwork.readOptional(buf);
-			server.execute(() -> requestChange(player, outfit));
-		});
-		ServerLifecycleEvents.SERVER_STARTED.register(server -> store = OutfitStore.load(server.getWorldPath(LevelResource.ROOT)));
-		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+		MinecraftForge.EVENT_BUS.addListener((ServerStartedEvent event) -> store = OutfitStore.load(event.getServer().getWorldPath(LevelResource.ROOT)));
+		MinecraftForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> {
 			store = null;
 			LAST_CHANGE.clear();
 			PENDING.clear();
 		});
-		ServerTickEvents.END_SERVER_TICK.register(OutfitServer::tick);
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> onJoin(handler.player, server));
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
-			// A change still waiting is applied anyway: the player pressed Apply before leaving.
-			Optional<Outfit> waiting = PENDING.remove(handler.player.getUUID());
-			if (waiting != null) {
-				setOutfit(server, handler.player.getUUID(), waiting.orElse(null));
+		MinecraftForge.EVENT_BUS.addListener((TickEvent.ServerTickEvent event) -> {
+			MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+			if (event.phase == TickEvent.Phase.END && server != null) {
+				tick(server);
 			}
-			LAST_CHANGE.remove(handler.player.getUUID());
 		});
-		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> registerCommands(dispatcher));
+		MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
+			if (event.getEntity() instanceof ServerPlayer) {
+				ServerPlayer player = (ServerPlayer) event.getEntity();
+				onJoin(player, player.server);
+			}
+		});
+		MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> {
+			if (!(event.getEntity() instanceof ServerPlayer)) {
+				return;
+			}
+			ServerPlayer player = (ServerPlayer) event.getEntity();
+			// A change still waiting is applied anyway: the player pressed Apply before leaving.
+			Optional<Outfit> waiting = PENDING.remove(player.getUUID());
+			if (waiting != null) {
+				setOutfit(player.server, player.getUUID(), waiting.orElse(null));
+			}
+			LAST_CHANGE.remove(player.getUUID());
+		});
+		MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> registerCommands(event.getDispatcher()));
 	}
 
 	/** A client pressed Apply. */
-	private static void requestChange(ServerPlayer player, Optional<Outfit> outfit) {
+	public static void requestChange(ServerPlayer player, Optional<Outfit> outfit) {
 		if (store == null) {
 			return;
 		}
@@ -131,8 +143,8 @@ public final class OutfitServer {
 	}
 
 	private static void sendTo(ServerPlayer viewer, UUID player, Optional<Outfit> outfit) {
-		if (ServerPlayNetworking.canSend(viewer, OutfitNetwork.OUTFIT)) {
-			ServerPlayNetworking.send(viewer, OutfitNetwork.OUTFIT, OutfitNetwork.outfit(player, outfit));
+		if (OutfitNetwork.canSend(viewer)) {
+			OutfitNetwork.sendTo(viewer, player, outfit);
 		}
 	}
 
