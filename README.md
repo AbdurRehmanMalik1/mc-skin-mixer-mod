@@ -38,8 +38,18 @@ public, and never rename the branch: players' games ask for this exact address.
 
 | Category | Skins |
 |---|---|
-| Block heads | Marc's Head Format block heads: cactus, cake, chest, coconuts, melon, oak log, presents, pumpkin, TNT |
-| Arrows and signs | Marc's Head Format arrows, exclamation and question marks |
+| Mob heads (29, added to the mod's own 24) | allay, bat, bee, drowned, ender dragon, endermite, evoker, fox, goat, guardian, horse, husk, mooshroom, panda, parrot, piglin, pufferfish, rabbit, shulker, silverfish, sniffer, snow golem, strider, turtle, vex, vindicator, warden, witch, wolf |
+| Block heads (25) | cactus, cake, chest, coconuts, melon, oak log, presents, pumpkin, TNT; bedrock, bookshelf, coal, furnace, glowstone, grass, iron, jukebox, lantern, netherrack, redstone, stone, crafting table |
+| Arrows and signs (6) | arrows, exclamation and question marks |
 
-Marc's Head Format (`MHF_`) accounts were made so anyone can use their skins as heads. Each one here was
-checked to exist and to have a skin.
+All are `MHF_` head accounts. The original Marc's Head Format set (the first 12 block heads and the
+arrows and signs) was made so anyone can use its skins as heads. The rest are newer `MHF_` accounts made
+by others: each was kept only after its current skin was looked at and clearly showed what its name says.
+11 others were left out because they didn't (a person's face, a different block, or nothing
+recognisable).
+
+## Keeping it clean
+
+These accounts belong to their owners, who can change the skin at any time; the browser always shows
+the current one. If one turns into something else, delete its line here: everyone stops seeing it
+within a game session.

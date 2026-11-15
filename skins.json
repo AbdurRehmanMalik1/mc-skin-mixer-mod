@@ -1,6 +1,42 @@
 {
 	"categories": [
 		{
+			"id": "mobs",
+			"name": "Mob heads",
+			"use": "head",
+			"skins": [
+				{ "name": "MHF_Allay", "id": "31e10cae0268422ab644b8f1e875c370" },
+				{ "name": "MHF_Bat", "id": "8e0de57202794ceca935a24bce407314" },
+				{ "name": "MHF_Bee", "id": "efc755af3d714b5a88d654d82cdb0671" },
+				{ "name": "MHF_Drowned", "id": "c7713fcd097744898ea2355d39533fb8" },
+				{ "name": "MHF_EnderDragon", "id": "bd3802bbbe48438cbafbcb9510e2aa2d" },
+				{ "name": "MHF_Endermite", "id": "3df6a050b93e4d8b8fa4b5228a797b84" },
+				{ "name": "MHF_Evoker", "id": "5c29e521486245b880dea223182f40ff" },
+				{ "name": "MHF_Fox", "id": "ff2ff985f2a04f7caa8e205ee7e3a0bc" },
+				{ "name": "MHF_Goat", "id": "84bfa69071784c049b7ab5bc506f0d29" },
+				{ "name": "MHF_Guardian", "id": "15aa0c6bd1654fb6bfbc6eb5348157dd" },
+				{ "name": "MHF_Horse", "id": "dfe7f4561fd5448cb8589f6bcd9a0de0" },
+				{ "name": "MHF_Husk", "id": "e47d9062311b46f2a7ff0d5559768eb5" },
+				{ "name": "MHF_Mooshroom", "id": "b48a45553d4c464282338ec6ed7b368c" },
+				{ "name": "MHF_Panda", "id": "d05f6aff328c42a6a201f130a7b1e655" },
+				{ "name": "MHF_Parrot", "id": "3d88c411c7e140f9b1f7fbe4b7aef4a2" },
+				{ "name": "MHF_Piglin", "id": "45b208b0c8ef4cb5a9265eb7d534d36a" },
+				{ "name": "MHF_Pufferfish", "id": "d2ebf24df5714957bc3d895afc8101bd" },
+				{ "name": "MHF_Rabbit", "id": "fbec11d480a74c1c9de34136a16f1de0" },
+				{ "name": "MHF_Shulker", "id": "160f7d8ac6b04fc889259e9d6c9c57d5" },
+				{ "name": "MHF_Silverfish", "id": "b6cc19af389a43a084d312949897e7e8" },
+				{ "name": "MHF_Sniffer", "id": "3c862e74d37f4bac9da1dbece494480e" },
+				{ "name": "MHF_SnowGolem", "id": "217f9e5e601f4a3d879be10d30e3e59b" },
+				{ "name": "MHF_Strider", "id": "d471cb0d83654ad2894c1108ef1ec03f" },
+				{ "name": "MHF_Turtle", "id": "bf62614418804ddc9f0668cfa7875ad5" },
+				{ "name": "MHF_Vex", "id": "f5f20997217f44268ab9c6db6cce023f" },
+				{ "name": "MHF_Vindicator", "id": "57eef111d79a433ea997c98e47b3221e" },
+				{ "name": "MHF_Warden", "id": "a641f8330c4842e190d67d53812948bd" },
+				{ "name": "MHF_Witch", "id": "fef85c492fdf47f89132552046243223" },
+				{ "name": "MHF_Wolf", "id": "8d2d1d6d80344c89bd86809a31fd5193" }
+			]
+		},
+		{
 			"id": "blocks",
 			"name": "Block heads",
 			"use": "head",
@@ -16,7 +52,20 @@
 				{ "name": "MHF_Present2", "id": "f1eb7cade2c04e9e8aad1eae21d5fd95" },
 				{ "name": "MHF_Pumpkin", "id": "f44d355bb6ae4ba88e62ae6441854785" },
 				{ "name": "MHF_TNT", "id": "d43af93cc3304a3dbab8ee74234a011a" },
-				{ "name": "MHF_TNT2", "id": "55e73380a9734a529bb51efa5256125c" }
+				{ "name": "MHF_TNT2", "id": "55e73380a9734a529bb51efa5256125c" },
+				{ "name": "MHF_Bedrock", "id": "b2b174fbeba448478849adcc9350cdd3" },
+				{ "name": "MHF_Bookshelf", "id": "82f54e288d8342428b6ffa8b7dc6f26f" },
+				{ "name": "MHF_Coal", "id": "b7cae46caf814c67a1095b8ea05c7499" },
+				{ "name": "MHF_Furnace", "id": "020d34c2eaed4a6b8382b5241f5d55dc" },
+				{ "name": "MHF_Glowstone", "id": "f84b9468a3cd4b2a9d46747635a58723" },
+				{ "name": "MHF_Grass", "id": "9e1cbd867b644234bfd04ff49854bac9" },
+				{ "name": "MHF_Iron", "id": "35063e7b31b64dcdbc1b344907952b8f" },
+				{ "name": "MHF_Jukebox", "id": "a8f48d0e82d04b26b98d4e9730761057" },
+				{ "name": "MHF_lantern", "id": "0d2499a978bf4415a23eadef90d808dd" },
+				{ "name": "MHF_Netherrack", "id": "11b29083caf7456080eed06ca020327f" },
+				{ "name": "MHF_Redstone", "id": "ac35fdd29d744ca897e7db32cdbe0170" },
+				{ "name": "MHF_Stone", "id": "ecfc3640f601406c9f9f1f857fc76f9d" },
+				{ "name": "MHF_Workbench", "id": "867ce8ed49de4f53b2c08a4e12e0472a" }
 			]
 		},
 		{
