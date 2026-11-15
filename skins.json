@@ -1,0 +1,36 @@
+{
+	"categories": [
+		{
+			"id": "blocks",
+			"name": "Block heads",
+			"use": "head",
+			"skins": [
+				{ "name": "MHF_Cactus", "id": "1d9048dbe8364b9aa10855014922f1ae" },
+				{ "name": "MHF_Cake", "id": "afb489c49fc848a498f2dd7bea414c9a" },
+				{ "name": "MHF_Chest", "id": "73d4e0683a6d4c8b8f853323546955c4" },
+				{ "name": "MHF_CoconutB", "id": "62efa973f6264092aede57ffbe84ff2b" },
+				{ "name": "MHF_CoconutG", "id": "74556fea28ed44588db29a8220da0c12" },
+				{ "name": "MHF_Melon", "id": "1c7d978447ea4bf3bc23acf260b436e6" },
+				{ "name": "MHF_OakLog", "id": "e224e5ece2994005ae223b0f77a57714" },
+				{ "name": "MHF_Present1", "id": "156b251b12e04829a130a61b53ba7720" },
+				{ "name": "MHF_Present2", "id": "f1eb7cade2c04e9e8aad1eae21d5fd95" },
+				{ "name": "MHF_Pumpkin", "id": "f44d355bb6ae4ba88e62ae6441854785" },
+				{ "name": "MHF_TNT", "id": "d43af93cc3304a3dbab8ee74234a011a" },
+				{ "name": "MHF_TNT2", "id": "55e73380a9734a529bb51efa5256125c" }
+			]
+		},
+		{
+			"id": "symbols",
+			"name": "Arrows and signs",
+			"use": "head",
+			"skins": [
+				{ "name": "MHF_ArrowUp", "id": "fef039efe6cd49879c8426a3e6134277" },
+				{ "name": "MHF_ArrowDown", "id": "68f59b9b5b0b4b05a9f2e1d1405aa348" },
+				{ "name": "MHF_ArrowLeft", "id": "a68f0b648d144000a95f4b9ba14f8df9" },
+				{ "name": "MHF_ArrowRight", "id": "50c8510b5ea04d60be9a7d542d6cd156" },
+				{ "name": "MHF_Exclamation", "id": "d3c47f6fae3a45c1ad7ce2c762b03ae6" },
+				{ "name": "MHF_Question", "id": "606e2ff0ed7748429d6ce1d3321c7838" }
+			]
+		}
+	]
+}
